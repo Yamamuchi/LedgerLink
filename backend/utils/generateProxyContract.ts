@@ -1,4 +1,5 @@
-function generateProxyContract(contractName: string, contractABI: any[], signatures: string[]): string {
+
+export function generateProxyContract(contractName: string, contractABI: any[], signatures: string[]): string {
     let proxyCode = `
 pragma solidity ^0.8.0;
 import "..."; // Your imports here, e.g. for Chainlink's CCIP
