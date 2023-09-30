@@ -1,7 +1,9 @@
 import { compileContract, generateSignatures } from './utils/parseContract';
 import { generateReplicatedFunctionProxyContract, generateSingularFowardingProxyContract } from './utils/generateProxyContract';
+import { deployMainSmartContract } from './utils/deployMainSmartContract';
 
 const source = `
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 contract Example {
@@ -32,3 +34,9 @@ console.log(replicatedProxyContractCode);
 
 console.log('\n--- Singular Proxy Contract Code ---');
 console.log(singularProxyContractCode);
+
+console.log('\n--- Deploying Main Smart Contract ---');
+deployMainSmartContract(source, 'Example', 'sepolia').then(address => {
+    console.log('Address:', address);
+});
+
