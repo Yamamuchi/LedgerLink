@@ -1,5 +1,7 @@
+import * as dotenvenc from '@chainlink/env-enc'
 import { ethers } from "ethers";
 
+dotenvenc.config();
 const solc = require('solc');
 
 function compileContract(sourceCode: string, contractName: string) {
