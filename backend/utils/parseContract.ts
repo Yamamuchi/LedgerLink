@@ -22,11 +22,17 @@ export function compileContract(source: string): any {
     return output.contracts['contract.sol'];
 }
 
-// This function extracts public and external functions from a contract's ABI.
-export function extractFunctions(contractABI: any[]): string[] {
-    return contractABI
-        .filter(item => (item.type === 'function' && (item.stateMutability === 'nonpayable' || item.stateMutability === 'payable')))
-        .map(func => func.name);
+export function extractPublicAndExternalFunctions(contract: string): string[] {
+    const functionRegex = /function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([^)]*)\)\s*(public|external)/g;
+
+    let match;
+    const functions = [];
+
+    while ((match = functionRegex.exec(contract)) !== null) {
+        functions.push(`function ${match[1]}(${match[2]}) ${match[3]}`);
+    }
+
+    return functions;
 }
 
 // This function generates function signatures from the function names and their inputs.
