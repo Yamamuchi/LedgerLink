@@ -1,26 +1,35 @@
-export function generateReplicatedFunctionProxyContract(signatures: string[]): string {
+import { Client } from "../contracts/Client";
+import { IRouterClient } from "../contracts/IRouterClient";
+import { LinkTokenInterface } from "../contracts/LinkTokenInterface";
+
+export function generateReplicatedFunctionProxyContract(signaturesAndFunctions: string[][]): string {
     let proxyCode = `
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
-import "..."; // Include necessary Chainlink imports here for CCIP
+
+${IRouterClient}
+${LinkTokenInterface}
 
 contract CCIPProxy {
     IRouterClient router;
     LinkTokenInterface linkToken;
     address public immutable targetAddress; 
+    uint64 public immutable destinationChainSelector;
 
     error NotEnoughBalance(uint256 currentBalance, uint256 calculatedFees); 
 
-    constructor(address _router, address _link, address _targetAddress) {
+    constructor(address _router, address _link, address _targetAddress, uint64 _destinationChainSelector) {
         router = IRouterClient(_router);
         linkToken = LinkTokenInterface(_link);
-        targetAddress = _targetAddress; // Initializing target address
+        targetAddress = _targetAddress;
+        destinationChainSelector = _destinationChainSelector; 
     }
 `;
 
-    signatures.forEach(sig => {
+    signaturesAndFunctions.forEach(([signature, func]) => {
         proxyCode += `
-    function ${sig} {
-        _forwardCCIPMessage("${sig}"); // Passing the entire signature directly
+    ${func} {
+        _forwardCCIPMessage("${signature}"); // Passing the entire signature directly
     }
 `;
     });
@@ -38,14 +47,14 @@ contract CCIPProxy {
             feeToken: address(linkToken)
         });
 
-        uint256 fees = router.getFee(_destinationChainSelector, message);
+        uint256 fees = router.getFee(destinationChainSelector, message);
 
         if (fees > linkToken.balanceOf(address(this)))
             revert NotEnoughBalance(linkToken.balanceOf(address(this)), fees);
 
         linkToken.approve(address(router), fees);
 
-        router.ccipSend(_destinationChainSelector, message); 
+        router.ccipSend(destinationChainSelector, message); 
     }
 `;
 
@@ -58,13 +67,16 @@ export function generateSingularFowardingProxyContract(): string {
     // Contract template
     let proxyCode = `
 pragma solidity ^0.8.0;
-import "..."; // Include necessary Chainlink imports here for CCIP
+
+${IRouterClient}
+${LinkTokenInterface}
 
 contract CCIPProxy {
     IRouterClient router;
     LinkTokenInterface linkToken;
     address public immutable targetAddress; 
     address public owner;
+    uint64 public immutable destinationChainSelector;
 
     mapping(string => bool) public allowList;
 
@@ -72,11 +84,12 @@ contract CCIPProxy {
     error FunctionNotAllowlisted(string signature);
     error NotOwner();
 
-    constructor(address _router, address _link, address _targetAddress) {
+    constructor(address _router, address _link, address _targetAddress, uint64 _destinationChainSelector) {
         router = IRouterClient(_router);
         linkToken = LinkTokenInterface(_link);
-        targetAddress = _targetAddress; // Initializing target address
-        owner = msg.sender; // Setting the deployer as the owner
+        targetAddress = _targetAddress; 
+        owner = msg.sender; 
+        destinationChainSelector = _destinationChainSelector; 
     }
 
     modifier onlyOwner() {
@@ -113,14 +126,14 @@ contract CCIPProxy {
             feeToken: address(linkToken)
         });
 
-        uint256 fees = router.getFee(_destinationChainSelector, message);
+        uint256 fees = router.getFee(destinationChainSelector, message);
 
         if (fees > linkToken.balanceOf(address(this)))
             revert NotEnoughBalance(linkToken.balanceOf(address(this)), fees);
 
         linkToken.approve(address(router), fees);
 
-        router.ccipSend(_destinationChainSelector, message); 
+        router.ccipSend(destinationChainSelector, message); 
     }
 }`;
 
