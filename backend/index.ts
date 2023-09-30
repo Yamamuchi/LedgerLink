@@ -40,7 +40,7 @@ console.log(singularProxyContractCode);
 
 console.log('\n--- Deploying Smart Contracts ---');
 const primaryNetwork: networkType = 'sepolia';
-const secondaryNetworks: networkType[] = ['mumbai', 'arbitrum_goerli'];
+const secondaryNetworks: networkType[] = ['maticmum', 'arbitrum-goerli'];
 const primaryContract = source;
 const primaryContractName = contractName;
 const secondaryContract = replicatedProxyContractCode;
