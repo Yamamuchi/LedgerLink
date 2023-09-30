@@ -1,6 +1,6 @@
-import { compileContract, generateSignatures } from './utils/parseContract';
+import { compileContract, generateSignatures, extractPublicAndExternalFunctions } from './utils/parseContract';
 import { generateReplicatedFunctionProxyContract, generateSingularFowardingProxyContract } from './utils/generateProxyContract';
-import { deployMainSmartContract } from './utils/deployMainSmartContract';
+import { deployContracts, networkType } from './utils/deployContracts';
 
 const source = `
 // SPDX-License-Identifier: MIT
@@ -8,8 +8,6 @@ pragma solidity ^0.8.0;
 
 contract Example {
     function destroyTheWorld() public {}
-    function mint(address receiver, uint256 amount) public {}
-    function burn(address holder) external {}
 }
 `;
 
@@ -18,7 +16,12 @@ const contractName = Object.keys(compiled)[0];
 const contractABI = compiled[contractName].abi;
 
 const signatures = generateSignatures(contractABI);
-const replicatedProxyContractCode = generateReplicatedFunctionProxyContract(signatures);
+const functions = extractPublicAndExternalFunctions(source);
+
+const signaturesAndFunctions = signatures.map((item, index) => [item, functions[index]]);
+console.log(signaturesAndFunctions);
+
+const replicatedProxyContractCode = generateReplicatedFunctionProxyContract(signaturesAndFunctions);
 const singularProxyContractCode = generateSingularFowardingProxyContract();
 
 console.log('--- Original Contract Source ---');
@@ -35,8 +38,22 @@ console.log(replicatedProxyContractCode);
 console.log('\n--- Singular Proxy Contract Code ---');
 console.log(singularProxyContractCode);
 
-console.log('\n--- Deploying Main Smart Contract ---');
-deployMainSmartContract(source, 'Example', 'sepolia').then(address => {
-    console.log('Address:', address);
+console.log('\n--- Deploying Smart Contracts ---');
+const primaryNetwork: networkType = 'sepolia';
+const secondaryNetworks: networkType[] = ['mumbai', 'arbitrum_goerli'];
+const primaryContract = source;
+const primaryContractName = contractName;
+const secondaryContract = replicatedProxyContractCode;
+const secondaryContractName = 'CCIPProxy';
+
+deployContracts(primaryNetwork, secondaryNetworks, primaryContract, primaryContractName, secondaryContract, secondaryContractName).then((addresses) => {
+    console.log('Deployment complete.');
+    console.log('Primary address:', addresses[0]);
+    console.log('Secondary addresses:', addresses.slice(1).join(', '));
+}).catch(err => {
+    console.log('Deployment failed.');
+    console.log(err);
 });
+
+
 
