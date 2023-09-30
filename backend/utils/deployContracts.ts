@@ -1,10 +1,11 @@
 import * as dotenvenc from '@chainlink/env-enc'
 import { ethers } from "ethers";
+import { BigNumber } from "@ethersproject/bignumber";
 
 dotenvenc.config();
 const solc = require('solc');
 
-export type networkType = 'arbitrum_goerli' | 'mumbai' | 'sepolia';
+export type networkType = 'arbitrum-goerli' | 'maticmum' | 'sepolia';
 
 interface ConstructorArgsMapping {
     [network: string]: any[];
@@ -12,8 +13,8 @@ interface ConstructorArgsMapping {
 
 const networkConstructorArguments: ConstructorArgsMapping = {
     'sepolia': ["0xD0daae2231E9CB96b94C8512223533293C3693Bf", "0x779877A7B0D9E8603169DdbD7836e478b4624789", BigNumber.from("16015286601757825753")],
-    'arbitrum_goerli': ["0x88E492127709447A5ABEFdaB8788a15B4567589E", "0xd14838A68E8AFBAdE5efb411d5871ea0011AFd28", BigNumber.from("6101244977088475029")],
-    'mumbai': ["0x70499c328e1E2a3c41108bd3730F6670a44595D1", "0x326C977E6efc84E512bB9C30f76E30c160eD06FB", BigNumber.from("12532609583862916517")],
+    'arbitrum-goerli': ["0x88E492127709447A5ABEFdaB8788a15B4567589E", "0xd14838A68E8AFBAdE5efb411d5871ea0011AFd28", BigNumber.from("6101244977088475029")],
+    'maticmum': ["0x70499c328e1E2a3c41108bd3730F6670a44595D1", "0x326C977E6efc84E512bB9C30f76E30c160eD06FB", BigNumber.from("12532609583862916517")],
 };
 
 function compileContract(sourceCode: string, contractName: string) {
@@ -61,7 +62,7 @@ async function deploySmartContract(wallet: ethers.Wallet, smartContract: string,
       contract.bytecode,
       wallet
     );
-  
+
     // Deploy the contract
     const deploymentTransaction = await contractFactory.getDeployTransaction(...args);
     const txResponse = await wallet.sendTransaction(deploymentTransaction);
@@ -83,9 +84,9 @@ async function deploySmartContract(wallet: ethers.Wallet, smartContract: string,
 async function connectWallet(network: string): Promise<ethers.Wallet> {
     let providerUrl: string;
 
-    if (network == 'arbitrum_goerli') {
+    if (network == 'arbitrum-goerli') {
         providerUrl = process.env.INFURA_ARBITRUM_GOERLI_URL!;
-    } else if (network == 'mumbai') {
+    } else if (network == 'maticmum') {
         providerUrl = process.env.INFURA_MUMBAI_URL!;
     } else if (network == 'sepolia') {
         providerUrl = process.env.INFURA_SEPOLIA_URL!;
@@ -94,7 +95,9 @@ async function connectWallet(network: string): Promise<ethers.Wallet> {
     }
 
     const privateKey = process.env.PRIVATE_KEY;
-    const provider = ethers.getDefaultProvider(providerUrl);
+    const provider = new ethers.providers.InfuraProvider(network, {
+        projectId: "8c5559aecb814cf589d38436b3bcb2da",
+        projectSecret: "9c7fb95161ef4fae8bcedb66b9f89c4f"});
     const wallet = new ethers.Wallet(privateKey!, provider);
 
     return wallet;
@@ -109,23 +112,24 @@ export async function deployContracts(
         proxyContractName: string
     ): Promise<string[]> {
 
-    const wallet = await connectWallet(primaryNetwork);
+    let wallet = await connectWallet(primaryNetwork);
 
+    console.log(`Deploying to primary network: ${primaryNetwork}...`);
     const primaryAddress = await deploySmartContract(wallet, primaryContract, primaryContractName)
 
     const promises = secondaryNetworks.map(async (network) => {
-        console.log(networkConstructorArguments[network][0]);
-        console.log(networkConstructorArguments[network][1]);
-        console.log(networkConstructorArguments[network][2]);
+        console.log(`Deploying to secondary network: ${network}...`);
 
-        const wallet = await connectWallet(network);
-        return deploySmartContract(wallet, 
+        wallet = await connectWallet(network);
+
+        const address = await deploySmartContract(wallet, 
             proxyContract, 
             proxyContractName, 
             networkConstructorArguments[network][0],
             networkConstructorArguments[network][1],
             primaryAddress,
-            networkConstructorArguments[network][2]);
+            networkConstructorArguments[network][2].toString());
+        return address;
     });
 
     // Await all promises to resolve
