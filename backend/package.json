@@ -10,11 +10,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@ethersproject/bignumber": "^5.7.0",
     "@types/node": "^20.8.0",
-    "solc": "^0.8.21",
+    "ethers": "^5.0.0",
+    "solc": "^0.8.4",
     "ts-node": "^10.9.1"
   },
   "devDependencies": {
+    "@chainlink/env-enc": "^1.0.5",
     "typescript": "^5.2.2"
   }
 }

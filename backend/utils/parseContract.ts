@@ -1,7 +1,7 @@
 import solc from 'solc';
 
 // This function compiles the Solidity contract and returns the JSON output.
-function compileContract(source: string): any {
+export function compileContract(source: string): any {
     const input = {
         language: 'Solidity',
         sources: {
@@ -22,15 +22,21 @@ function compileContract(source: string): any {
     return output.contracts['contract.sol'];
 }
 
-// This function extracts public and external functions from a contract's ABI.
-function extractFunctions(contractABI: any[]): string[] {
-    return contractABI
-        .filter(item => (item.type === 'function' && (item.stateMutability === 'nonpayable' || item.stateMutability === 'payable')))
-        .map(func => func.name);
+export function extractPublicAndExternalFunctions(contract: string): string[] {
+    const functionRegex = /function\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(([^)]*)\)\s*(public|external)/g;
+
+    let match;
+    const functions = [];
+
+    while ((match = functionRegex.exec(contract)) !== null) {
+        functions.push(`function ${match[1]}(${match[2]}) ${match[3]}`);
+    }
+
+    return functions;
 }
 
 // This function generates function signatures from the function names and their inputs.
-function generateSignatures(contractABI: any[]): string[] {
+export function generateSignatures(contractABI: any[]): string[] {
     return contractABI
         .filter(item => (item.type === 'function' && (item.stateMutability === 'nonpayable' || item.stateMutability === 'payable')))
         .map(func => {
@@ -38,23 +44,3 @@ function generateSignatures(contractABI: any[]): string[] {
             return `${func.name}(${params})`;
         });
 }
-
-// Example Usage
-const source = `
-pragma solidity ^0.8.0;
-
-contract Example {
-    function mint(address receiver, uint256 amount) public {}
-    function burn(address holder) external {}
-}
-`;
-
-const compiled = compileContract(source);
-const contractName = Object.keys(compiled)[0];
-const contractABI = compiled[contractName].abi;
-
-const functions = extractFunctions(contractABI);
-console.log('Functions:', functions);
-
-const signatures = generateSignatures(contractABI);
-console.log('Signatures:', signatures);
