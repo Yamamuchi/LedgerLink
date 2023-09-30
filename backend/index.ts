@@ -1,4 +1,4 @@
-import { compileContract, extractFunctions, generateSignatures } from './utils/parseContract';
+import { compileContract, generateSignatures } from './utils/parseContract';
 import { generateProxyContract } from './utils/generateProxyContract';
 
 const source = `
@@ -15,8 +15,16 @@ const compiled = compileContract(source);
 const contractName = Object.keys(compiled)[0];
 const contractABI = compiled[contractName].abi;
 
-// const functions = extractFunctions(contractABI);
 const signatures = generateSignatures(contractABI);
-
 const proxyContractCode = generateProxyContract(contractName, contractABI, signatures);
+
+console.log('--- Original Contract Source ---');
+console.log(source);
+
+console.log('\n--- Extracted Signatures ---');
+signatures.forEach(signature => {
+    console.log(signature);
+});
+
+console.log('\n--- Proxy Contract Code ---');
 console.log(proxyContractCode);
