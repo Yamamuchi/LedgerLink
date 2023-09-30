@@ -4,6 +4,8 @@ import { ethers } from "ethers";
 dotenvenc.config();
 const solc = require('solc');
 
+export type networkType = 'arbitrum_georli' | 'mumbai' | 'sepolia';
+
 function compileContract(sourceCode: string, contractName: string) {
     // Compile the source code
     const input = {
@@ -36,9 +38,9 @@ function compileContract(sourceCode: string, contractName: string) {
     };
 }
 
-export async function deployMainSmartContract(smartContract: string, smartContractName: string): Promise<string> {
+export async function deployMainSmartContract(smartContract: string, smartContractName: string, network: networkType): Promise<string> {
 
-    const wallet = await connectWallet();
+    const wallet = await connectWallet(network);
 
     const contract = compileContract(smartContract, smartContractName);
 
@@ -70,11 +72,22 @@ export async function deployMainSmartContract(smartContract: string, smartContra
     return contractAddress;
 }
 
-async function connectWallet(): Promise<ethers.Wallet>{
-    const providerUrl = 'https://polygon-mumbai.infura.io/v3/6c138ac63eea440282ca61a0d22266c4';
-    const privateKey = '0x123456789';
+async function connectWallet(network: string): Promise<ethers.Wallet> {
+    let providerUrl: string;  // Declare providerUrl here
+
+    if (network == 'arbitrum_georli') {
+        providerUrl = process.env.INFURA_ARBITRUM_GOERLI_URL!;
+    } else if (network == 'mumbai') {
+        providerUrl = process.env.INFURA_MUMBAI_URL!;
+    } else if (network == 'sepolia') {
+        providerUrl = process.env.INFURA_SEPOLIA_URL!;
+    } else {
+        throw new Error('Network not supported.');
+    }
+
+    const privateKey = process.env.PRIVATE_KEY;
     const provider = ethers.getDefaultProvider(providerUrl);
-    const wallet = new ethers.Wallet(privateKey, provider);
+    const wallet = new ethers.Wallet(privateKey!, provider);
 
     return wallet;
 }
