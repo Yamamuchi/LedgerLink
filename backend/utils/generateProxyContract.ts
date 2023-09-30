@@ -6,7 +6,9 @@ import "..."; // Include necessary Chainlink imports here for CCIP
 contract CCIPProxy {
     IRouterClient router;
     LinkTokenInterface linkToken;
-    address public immutable targetAddress; // Adding immutable target address
+    address public immutable targetAddress; 
+
+    error NotEnoughBalance(uint256 currentBalance, uint256 calculatedFees); 
 
     constructor(address _router, address _link, address _targetAddress) {
         router = IRouterClient(_router);
