@@ -44,23 +44,3 @@ export function generateSignatures(contractABI: any[]): string[] {
             return `${func.name}(${params})`;
         });
 }
-
-// // Example Usage
-// const source = `
-// pragma solidity ^0.8.0;
-
-// contract Example {
-//     function mint(address receiver, uint256 amount) public {}
-//     function burn(address holder) external {}
-// }
-// `;
-
-// const compiled = compileContract(source);
-// const contractName = Object.keys(compiled)[0];
-// const contractABI = compiled[contractName].abi;
-
-// const functions = extractFunctions(contractABI);
-// console.log('Functions:', functions);
-
-// const signatures = generateSignatures(contractABI);
-// console.log('Signatures:', signatures);
