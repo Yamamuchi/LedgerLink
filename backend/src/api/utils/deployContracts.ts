@@ -6,6 +6,7 @@ dotenvenc.config();
 const solc = require('solc');
 
 export type networkType = 'arbitrum-goerli' | 'maticmum' | 'sepolia';
+export type deploymentType = 'replicated' | 'singular';
 
 interface ConstructorArgsMapping {
     [network: string]: any[];
