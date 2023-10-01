@@ -9,8 +9,11 @@ export default function App() {
   const [secondaryChains, setSecondaryChains] = useState([]);
   const [crossChainDeploymentType, setcrossChainDeploymentType] = useState(null);
 
+  const [primaryAddress, setPrimaryAddress] = useState('');
+  const [secondaryAddresses, setSecondaryAddresses] = useState([]);
+
   useFonts({
-    'Inter-Black': require('./assets/fonts/static/Inter-Black.ttf'), // Update the path to your font file
+    'Inter-Black': require('./assets/fonts/static/Inter-Black.ttf'), 
   });
 
   const chainlinkLogo = Asset.fromModule(require('./assets/chainlinklogo.png'));
@@ -96,6 +99,9 @@ export default function App() {
           `Contract Deployment Successful\n\nPrimary Address: ${jsonResponse.primaryAddress}\n\nSecondary Addresses: ${jsonResponse.secondaryAddresses.join(", ")}`,
           [{ text: "HELP" }]
         );
+
+        setPrimaryAddress(jsonResponse.primaryAddress);
+        setSecondaryAddresses(jsonResponse.secondaryAddresses);
       } else {
         console.error('API Error:', response.statusText);
       }
@@ -226,15 +232,32 @@ export default function App() {
       </View>
 
       <View style={styles.centeredContainer}>
-      <Pressable
-          style={styles.deployButton}
-          onPress={handleDeployContract}
-      >
-          <Text style={styles.deployButtonText}>
-              {isDeploying ? 'Deploying...' : 'DEPLOY'}
-          </Text>
-      </Pressable>
-      </View>
+            <Pressable
+                style={styles.deployButton}
+                onPress={handleDeployContract}
+            >
+                <Text style={styles.deployButtonText}>
+                    {isDeploying ? 'Deploying...' : 'DEPLOY'}
+                </Text>
+            </Pressable>
+
+            {primaryAddress && (
+                <View>
+                    <Text style={styles.addressText}>Primary Address:</Text>
+                    <Text style={styles.addressText}>{primaryAddress}</Text>
+                </View>
+            )}
+
+            {secondaryAddresses.length > 0 && (
+                <View>
+                    <Text style={styles.addressText}>Secondary Addresses:</Text>
+                    {secondaryAddresses.map((address, index) => (
+                        <Text key={index} style={styles.addressText}>{address}</Text>
+                    ))}
+                </View>
+            )}
+        </View>
+
       <View style={styles.poweredByContainer}>
         <Image 
             source={chainlinkLogo} 
@@ -388,5 +411,11 @@ const styles = StyleSheet.create({
       fontFamily: 'Inter-Black',
       fontSize: 16,  // adjust as needed
       fontWeight: 'bold',
-  }
+  },
+  addressText: {
+    marginTop: 16,
+    color: '#fff',
+    fontFamily: 'Inter-Black',
+    fontSize: 14,
+  },
 });

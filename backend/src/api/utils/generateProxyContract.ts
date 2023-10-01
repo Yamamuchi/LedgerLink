@@ -1,4 +1,3 @@
-import { Client } from "../contracts/Client";
 import { IRouterClient } from "../contracts/IRouterClient";
 import { LinkTokenInterface } from "../contracts/LinkTokenInterface";
 
@@ -38,8 +37,8 @@ contract CCIPProxy {
     function _forwardCCIPMessage(string memory signature) private {
         // Constructing the CCIP message
         Client.EVM2AnyMessage memory message = Client.EVM2AnyMessage({
-            receiver: abi.encode(address(this)), // This might need adjustment based on specific use-cases
-            data: abi.encodeWithSignature(signature, targetAddress), // Using the immutable target address
+            receiver: abi.encode(address(this)), 
+            data: abi.encodeWithSignature(signature, targetAddress), 
             tokenAmounts: new Client.EVMTokenAmount[](0),
             extraArgs: Client._argsToBytes(
                 Client.EVMExtraArgsV1({gasLimit: 200_000, strict: false})
@@ -64,7 +63,6 @@ contract CCIPProxy {
 }
 
 export function generateSingularFowardingProxyContract(): string {
-    // Contract template
     let proxyCode = `
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
