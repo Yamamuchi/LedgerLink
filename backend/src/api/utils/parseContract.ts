@@ -1,6 +1,5 @@
 import solc from 'solc';
 
-// This function compiles the Solidity contract and returns the JSON output.
 export function compileContract(source: string): any {
     console.log("Raw contract source:", source);
 
@@ -38,7 +37,7 @@ export function extractPublicAndExternalFunctions(contract: string): string[] {
     return functions;
 }
 
-// This function generates function signatures from the function names and their inputs.
+
 export function generateSignatures(contractABI: any[]): string[] {
     return contractABI
         .filter(item => (item.type === 'function' && (item.stateMutability === 'nonpayable' || item.stateMutability === 'payable')))

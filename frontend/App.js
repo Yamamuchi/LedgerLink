@@ -17,8 +17,11 @@ export default function App() {
   const [wallet, setWallet] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
 
+  const [primaryAddress, setPrimaryAddress] = useState('');
+  const [secondaryAddresses, setSecondaryAddresses] = useState([]);
+
   useFonts({
-    'Inter-Black': require('./assets/fonts/static/Inter-Black.ttf'),
+    'Inter-Black': require('./assets/fonts/static/Inter-Black.ttf'), 
   });
 
   const chainlinkLogo = Asset.fromModule(require('./assets/chainlinklogo.png'));
@@ -56,6 +59,9 @@ export default function App() {
     }
   };
   
+
+  const [isDeploying, setIsDeploying] = useState(false);
+
 
   const handlePrimaryChainChange = (value) => {
     setPrimaryChain(value);
@@ -129,13 +135,16 @@ export default function App() {
           `Contract Deployment Successful\n\nPrimary Address: ${jsonResponse.primaryAddress}\n\nSecondary Addresses: ${jsonResponse.secondaryAddresses.join(", ")}`,
           [{ text: "HELP" }]
         );
+
+        setPrimaryAddress(jsonResponse.primaryAddress);
+        setSecondaryAddresses(jsonResponse.secondaryAddresses);
       } else {
         console.error('API Error:', response.statusText);
       }
 
       setIsDeploying(false);
 
-    } catch (error) {
+     } catch (error) {
       console.error('Fetch error:', error.message);
       setIsDeploying(false); 
     }
@@ -250,12 +259,31 @@ export default function App() {
       </View>
 
       <View style={styles.centeredContainer}>
-        <Pressable style={styles.deployButton} onPress={handleDeployContract}>
-          <Text style={styles.deployButtonText}>
-            {isDeploying ? 'Deploying...' : 'DEPLOY'}
-          </Text>
-        </Pressable>
-      </View>
+            <Pressable
+                style={styles.deployButton}
+                onPress={handleDeployContract}
+            >
+                <Text style={styles.deployButtonText}>
+                    {isDeploying ? 'Deploying...' : 'DEPLOY'}
+                </Text>
+            </Pressable>
+
+            {primaryAddress && (
+                <View>
+                    <Text style={styles.addressText}>Primary Address:</Text>
+                    <Text style={styles.addressText}>{primaryAddress}</Text>
+                </View>
+            )}
+
+            {secondaryAddresses.length > 0 && (
+                <View>
+                    <Text style={styles.addressText}>Secondary Addresses:</Text>
+                    {secondaryAddresses.map((address, index) => (
+                        <Text key={index} style={styles.addressText}>{address}</Text>
+                    ))}
+                </View>
+            )}
+        </View>
       <View style={styles.poweredByContainer}>
         <Image source={chainlinkLogo} style={styles.bottomRightImage} />
         <View style={styles.poweredByTextContainer}>
@@ -401,9 +429,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   chainlinkText: {
+      color: '#fff',
+      fontFamily: 'Inter-Black',
+      fontSize: 16,  // adjust as needed
+      fontWeight: 'bold',
+  },
+  addressText: {
+    marginTop: 16,
     color: '#fff',
     fontFamily: 'Inter-Black',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 14,
   },
 });

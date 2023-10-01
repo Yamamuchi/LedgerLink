@@ -57,8 +57,6 @@ export const deploySmartContracts = (req: Request, res: Response) => {
     }
 
     const secondaryContractName = 'CCIPProxy';
-
-    let deployedAddresses: string[] = [];
     
     deployContracts(primaryNetwork, secondaryNetworks, primaryContract, primaryContractName, secondaryContract!, secondaryContractName)
         .then((addresses) => {
