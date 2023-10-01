@@ -1,7 +1,9 @@
 import { IRouterClient } from "../contracts/IRouterClient";
 import { LinkTokenInterface } from "../contracts/LinkTokenInterface";
 
-export function generateReplicatedFunctionProxyContract(signaturesAndFunctions: string[][]): string {
+export function generateReplicatedFunctionProxyContract(signaturesAndFunctions: string[][], primaryAddress: string): string {
+    console.log(`apple: ${signaturesAndFunctions}`)
+    
     let proxyCode = `
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
@@ -25,6 +27,7 @@ contract CCIPProxy {
     }
 `;
 
+    
     signaturesAndFunctions.forEach(([signature, func]) => {
         proxyCode += `
     ${func} {
@@ -37,7 +40,7 @@ contract CCIPProxy {
     function _forwardCCIPMessage(string memory signature) private {
         // Constructing the CCIP message
         Client.EVM2AnyMessage memory message = Client.EVM2AnyMessage({
-            receiver: abi.encode(address(this)), 
+            receiver: abi.encode(${primaryAddress}), 
             data: abi.encodeWithSignature(signature, targetAddress), 
             tokenAmounts: new Client.EVMTokenAmount[](0),
             extraArgs: Client._argsToBytes(
@@ -62,7 +65,7 @@ contract CCIPProxy {
     return proxyCode;
 }
 
-export function generateSingularFowardingProxyContract(): string {
+export function generateSingularFowardingProxyContract(primaryAddress: string): string {
     let proxyCode = `
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
@@ -71,8 +74,8 @@ ${IRouterClient}
 ${LinkTokenInterface}
 
 contract CCIPProxy {
-    IRouterClient router;
-    LinkTokenInterface linkToken;
+    IRouterClient public router;
+    LinkTokenInterface public linkToken;
     address public immutable targetAddress; 
     address public owner;
     uint64 public immutable destinationChainSelector;
@@ -116,7 +119,7 @@ contract CCIPProxy {
     function _forwardCCIPMessage(string memory signature, bytes memory data) private {
         // Constructing the CCIP message
         Client.EVM2AnyMessage memory message = Client.EVM2AnyMessage({
-            receiver: abi.encode(address(this)), // This might need adjustment based on specific use-cases
+            receiver: abi.encode(${primaryAddress}), 
             data: abi.encodeWithSignature(signature, data),
             tokenAmounts: new Client.EVMTokenAmount[](0),
             extraArgs: Client._argsToBytes(

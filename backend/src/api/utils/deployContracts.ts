@@ -1,6 +1,7 @@
 import * as dotenvenc from '@chainlink/env-enc'
 import { ethers } from "ethers";
 import { BigNumber } from "@ethersproject/bignumber";
+import { generateReplicatedFunctionProxyContract, generateSingularFowardingProxyContract } from '../utils/generateProxyContract';
 
 dotenvenc.config();
 const solc = require('solc');
@@ -18,7 +19,7 @@ const networkConstructorArguments: ConstructorArgsMapping = {
     'maticmum': ["0x70499c328e1E2a3c41108bd3730F6670a44595D1", "0x326C977E6efc84E512bB9C30f76E30c160eD06FB", BigNumber.from("12532609583862916517")],
 };
 
-function compileContract(sourceCode: string, contractName: string) {
+function compileProxyContract(sourceCode: string, contractName: string) {
     // Compile the source code
     const input = {
         language: 'Solidity',
@@ -50,9 +51,50 @@ function compileContract(sourceCode: string, contractName: string) {
     };
 }
 
+function compileMainContract(sourceCode: string) {
+
+    const input = {
+        language: 'Solidity',
+        sources: {
+            'Pseudorandom.sol': {
+                content: sourceCode
+            }
+        },
+        settings: {
+            outputSelection: {
+                '*': {
+                    '*': ['*']
+                }
+            }
+        }
+    };
+
+    const output = JSON.parse(solc.compile(JSON.stringify(input)));
+
+    if (output.errors) {
+        console.error('Compilation errors:', output.errors);
+        return null;
+    }
+
+    const contract = output.contracts['Pseudorandom.sol']['Pseudorandom'];
+    return {
+        abi: contract.abi,
+        bytecode: contract.evm.bytecode.object
+    };
+}
+
 async function deploySmartContract(wallet: ethers.Wallet, smartContract: string, smartContractName: string, ...args: any[]): Promise<string> {
 
-    const contract = compileContract(smartContract, smartContractName);
+    console.log(smartContract)
+    let contract: any;
+
+    if (smartContractName == 'CCIPProxy') {
+        contract = compileProxyContract(smartContract, smartContractName);
+    } else {
+        contract = compileMainContract(smartContract);
+    }
+
+    console.log(contract);
 
     if (!contract) {
         throw new Error('Failed to compile the smart contract.');
@@ -109,14 +151,25 @@ export async function deployContracts(
         secondaryNetworks: networkType[], 
         primaryContract: string,
         primaryContractName: string,
-        proxyContract: string,
-        proxyContractName: string
+        signaturesAndFunctions: string[][],
     ): Promise<string[]> {
+
+
+    const proxyContractName = 'CCIPProxy';
 
     let wallet = await connectWallet(primaryNetwork);
 
+    console.log('Hello');
     console.log(`Deploying to primary network: ${primaryNetwork}...`);
-    const primaryAddress = await deploySmartContract(wallet, primaryContract, primaryContractName)
+    console.log(`Hello: ${networkConstructorArguments[primaryNetwork][0]}`)
+    console.log('Hello');
+    const primaryAddress = await deploySmartContract(wallet, primaryContract, primaryContractName, networkConstructorArguments[primaryNetwork][0]);
+
+    const proxyContract = generateReplicatedFunctionProxyContract(signaturesAndFunctions, primaryAddress);
+
+    console.log('\n--- Replicated Proxy Contract Code ---');
+    console.log(proxyContract);
+    
 
     const promises = secondaryNetworks.map(async (network) => {
         console.log(`Deploying to secondary network: ${network}...`);
@@ -127,13 +180,12 @@ export async function deployContracts(
             proxyContract, 
             proxyContractName, 
             networkConstructorArguments[network][0],
-            networkConstructorArguments[network][1],
+            networkConstructorArguments[primaryNetwork][1],
             primaryAddress,
             networkConstructorArguments[network][2].toString());
         return address;
     });
 
-    // Await all promises to resolve
     const addresses = await Promise.all(promises);
 
     return [primaryAddress, ...addresses];

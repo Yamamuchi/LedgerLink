@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 
-import { compileContract, generateSignatures, extractPublicAndExternalFunctions } from '../utils/parseContract';
+import { compileContract, extractSignatures, extractPublicAndExternalFunctions } from '../utils/parseContract';
 import { generateReplicatedFunctionProxyContract, generateSingularFowardingProxyContract } from '../utils/generateProxyContract';
 import { deployContracts, networkType, deploymentType } from '../utils/deployContracts';
 
@@ -20,45 +20,28 @@ export const deploySmartContracts = (req: Request, res: Response) => {
     const contractName = Object.keys(compiled)[0];
     const contractABI = compiled[contractName].abi;
 
-    const signatures = generateSignatures(contractABI);
     const functions = extractPublicAndExternalFunctions(smartContract);
+    const signatures = extractSignatures(functions);
 
-    const signaturesAndFunctions = signatures.map((item, index) => [item, functions[index]]);
-    console.log(signaturesAndFunctions);
-    
-    const replicatedProxyContractCode = generateReplicatedFunctionProxyContract(signaturesAndFunctions);
-    const singularProxyContractCode = generateSingularFowardingProxyContract();
+    console.log(`funcs: ${functions}`)
+    console.log(`signatures: ${signatures}`)
+
+    const signaturesAndFunctions = signatures.map((item: string, index: number) => [item, functions[index]]);
+    console.log(`hello: ${signaturesAndFunctions}`);
 
     console.log('--- Original Contract Source ---');
     console.log(smartContract);
     
     console.log('\n--- Extracted Signatures ---');
-    signatures.forEach(signature => {
-        console.log(signature);
-    });
-    
-    console.log('\n--- Replicated Proxy Contract Code ---');
-    console.log(replicatedProxyContractCode);
-    
-    console.log('\n--- Singular Proxy Contract Code ---');
-    console.log(singularProxyContractCode);
+
     
     console.log('\n--- Deploying Smart Contracts ---');
 
     const primaryContract = smartContract;
     const primaryContractName = contractName;
 
-    let secondaryContract: string;
 
-    if (crossChainDeploymentType == 'singular') {
-        secondaryContract = singularProxyContractCode;
-    } else if (crossChainDeploymentType == 'replicated') {
-        secondaryContract = replicatedProxyContractCode;
-    }
-
-    const secondaryContractName = 'CCIPProxy';
-    
-    deployContracts(primaryNetwork, secondaryNetworks, primaryContract, primaryContractName, secondaryContract!, secondaryContractName)
+    deployContracts(primaryNetwork, secondaryNetworks, primaryContract, primaryContractName, signaturesAndFunctions)
         .then((addresses) => {
             console.log('Deployment complete.');
             console.log('Primary address:', addresses[0]);
