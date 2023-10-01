@@ -2,12 +2,13 @@ import { Request, Response } from 'express';
 
 import { compileContract, generateSignatures, extractPublicAndExternalFunctions } from '../utils/parseContract';
 import { generateReplicatedFunctionProxyContract, generateSingularFowardingProxyContract } from '../utils/generateProxyContract';
-import { deployContracts, networkType } from '../utils/deployContracts';
+import { deployContracts, networkType, deploymentType } from '../utils/deployContracts';
 
 export const deploySmartContracts = (req: Request, res: Response) => {
     const smartContract = req.body.smartContract;
     const primaryNetwork: networkType = req.body.primaryNetwork;
     const secondaryNetworks: networkType[] = req.body.secondaryNetworks;
+    const crossChainDeploymentType: deploymentType = req.body.crossChainDeploymentType;
 
     console.log(req.body);
 
@@ -46,12 +47,20 @@ export const deploySmartContracts = (req: Request, res: Response) => {
 
     const primaryContract = smartContract;
     const primaryContractName = contractName;
-    const secondaryContract = replicatedProxyContractCode;
+
+    let secondaryContract: string;
+
+    if (crossChainDeploymentType == 'singular') {
+        secondaryContract = singularProxyContractCode;
+    } else if (crossChainDeploymentType == 'replicated') {
+        secondaryContract = replicatedProxyContractCode;
+    }
+
     const secondaryContractName = 'CCIPProxy';
 
     let deployedAddresses: string[] = [];
     
-    deployContracts(primaryNetwork, secondaryNetworks, primaryContract, primaryContractName, secondaryContract, secondaryContractName)
+    deployContracts(primaryNetwork, secondaryNetworks, primaryContract, primaryContractName, secondaryContract!, secondaryContractName)
         .then((addresses) => {
             console.log('Deployment complete.');
             console.log('Primary address:', addresses[0]);
