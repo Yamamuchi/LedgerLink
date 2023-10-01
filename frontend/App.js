@@ -12,7 +12,6 @@ export default function App() {
   const [isPolygonChecked, setPolygonChecked] = useState(false);
   const [isSepoliaChecked, setSepoliaChecked] = useState(false);
   const [isArbitrumGoerliChecked, setArbitrumGoerliChecked] = useState(false);
-  const [isDeploying, setIsDeploying] = useState(false);
   const [provider, setProvider] = useState(null);
   const [wallet, setWallet] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
