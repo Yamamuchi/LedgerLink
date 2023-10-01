@@ -1,30 +1,66 @@
-import React, { useState } from 'react';
-import { ScrollView, View, Text, TextInput, Pressable, CheckBox, Picker, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { ScrollView, View, Text, TextInput, Pressable, CheckBox, Picker, Image, StyleSheet } from 'react-native';
 import { useFonts } from 'expo-font';
 import { Asset } from 'expo-asset';
+import { ethers } from 'ethers';
 
 export default function App() {
   const [contractInput, setContractInput] = useState('');
   const [primaryChain, setPrimaryChain] = useState('sepolia');
   const [secondaryChains, setSecondaryChains] = useState([]);
-  const [crossChainDeploymentType, setcrossChainDeploymentType] = useState(null);
+  const [crossChainDeploymentType, setCrossChainDeploymentType] = useState(null);
+  const [isPolygonChecked, setPolygonChecked] = useState(false);
+  const [isSepoliaChecked, setSepoliaChecked] = useState(false);
+  const [isArbitrumGoerliChecked, setArbitrumGoerliChecked] = useState(false);
+  const [isDeploying, setIsDeploying] = useState(false);
+  const [provider, setProvider] = useState(null);
+  const [wallet, setWallet] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
 
   useFonts({
-    'Inter-Black': require('./assets/fonts/static/Inter-Black.ttf'), // Update the path to your font file
+    'Inter-Black': require('./assets/fonts/static/Inter-Black.ttf'),
   });
 
   const chainlinkLogo = Asset.fromModule(require('./assets/chainlinklogo.png'));
 
-  // Create separate state for each checkbox
-  const [isPolygonChecked, setPolygonChecked] = useState(false);
-  const [isSepoliaChecked, setSepoliaChecked] = useState(false);
-  const [isArbitrumGoerliChecked, setArbitrumGoerliChecked] = useState(false);
+  useEffect(() => {
+    const initProvider = async () => {
+      const infuraApiKey = 'YOUR_INFURA_API_KEY';
+      const infuraProvider = new ethers.providers.JsonRpcProvider(`https://mainnet.infura.io/v3/${infuraApiKey}`);
+      setProvider(infuraProvider);
+    };
+
+    initProvider();
+  }, []);
+
+  const connectWallet = async () => {
+    if (provider) {
+      try {
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        setProvider(provider);
+
+        const signer = provider.getSigner();
+        const address = await signer.getAddress();
+        setWallet(signer);
+        
+        setIsConnected(true); // Update connection status
+
+        alert(`Connected to wallet\n\nAddress: ${address}`);
+      } catch (error) {
+        console.error('Error connecting to wallet:', error.message);
+      }
+    } else {
+      alert('MetaMask extension is not installed. Please install it to connect your wallet.');
+    }
+  };
+  
 
   const handlePrimaryChainChange = (value) => {
     setPrimaryChain(value);
     if (secondaryChains.includes(value)) {
       setSecondaryChains(secondaryChains.filter((c) => c !== value));
-      // Also update the respective checkbox
       if (value === 'sepolia') {
         setSepoliaChecked(false);
       } else if (value === 'maticmum') {
@@ -48,6 +84,8 @@ export default function App() {
   };
 
   const handleDeployContract = async () => {
+    setIsDeploying(true);
+
     console.log('Smart Contract:', contractInput);
     console.log('Primary Chain:', primaryChain);
     console.log('Secondary Chains:', secondaryChains);
@@ -68,7 +106,7 @@ export default function App() {
       "crossChainDeploymentType": crossChainDeploymentType
     };
 
-      // Define your endpoint URL
+    // Define your endpoint URL
     const apiEndpoint = 'http://localhost:3000/deploy';
 
     try {
@@ -94,27 +132,22 @@ export default function App() {
       } else {
         console.error('API Error:', response.statusText);
       }
-     } catch (error) {
-      console.error('Fetch error:', error.message);
-    }
-    };
 
-  const handleConnectWallet = () => {
-    // Add logic to connect to the wallet here
+      setIsDeploying(false);
+
+    } catch (error) {
+      console.error('Fetch error:', error.message);
+      setIsDeploying(false); 
+    }
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.container}
-    >
+    <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.centeredContainer}>
         <Text style={styles.logoText}>LedgerLink</Text>
       </View>
-      <Pressable
-        style={styles.connectButton}
-        onPress={handleConnectWallet}
-      >
-        <Text style={styles.connectButtonText}>Connect to wallet</Text>
+      <Pressable style={styles.connectButton} onPress={isConnected ? undefined : connectWallet}>
+        <Text style={styles.connectButtonText}>{isConnected ? 'Connected' : 'Connect to wallet'}</Text>
       </Pressable>
 
       <View style={styles.centeredContainer}>
@@ -130,59 +163,59 @@ export default function App() {
         <Text style={styles.label}>Primary Chain:</Text>
       </View>
       <View style={[styles.centeredContainer, styles.pickerContainer]}>
-      <Picker
-        selectedValue={primaryChain}
-        onValueChange={(itemValue) => handlePrimaryChainChange(itemValue)}
-        style={styles.picker}
-      >
-        <Picker.Item label="Sepolia" value="sepolia" />
-        <Picker.Item label="Polygon Mumbai" value="maticmum" />
-        <Picker.Item label="Arbitrum Goerli" value="arbitrum-goerli" />
-      </Picker>
+        <Picker
+          selectedValue={primaryChain}
+          onValueChange={(itemValue) => handlePrimaryChainChange(itemValue)}
+          style={styles.picker}
+        >
+          <Picker.Item label="Sepolia" value="sepolia" />
+          <Picker.Item label="Polygon Mumbai" value="maticmum" />
+          <Picker.Item label="Arbitrum Goerli" value="arbitrum-goerli" />
+        </Picker>
       </View>
       <View style={styles.centeredContainer}>
         <Text style={styles.label}>Secondary Chains:</Text>
       </View>
       <View style={styles.checkboxContainer}>
         <View style={styles.checkboxAndText}>
-        <CheckBox
-          value={isSepoliaChecked}
-          onValueChange={() => {
+          <CheckBox
+            value={isSepoliaChecked}
+            onValueChange={() => {
               if (primaryChain !== 'sepolia') {
-                  setSepoliaChecked(!isSepoliaChecked);
-                  handleSecondaryChainChange('sepolia');
+                setSepoliaChecked(!isSepoliaChecked);
+                handleSecondaryChainChange('sepolia');
               } else {
-                  alert('You cannot select the same chain as both primary and secondary.');
+                alert('You cannot select the same chain as both primary and secondary.');
               }
-          }}
+            }}
           />
           <Text style={styles.checkboxText}>Sepolia</Text>
         </View>
         <View style={styles.checkboxAndText}>
-        <CheckBox
-          value={isPolygonChecked}
-          onValueChange={() => {
+          <CheckBox
+            value={isPolygonChecked}
+            onValueChange={() => {
               if (primaryChain !== 'maticmum') {
-                  setPolygonChecked(!isPolygonChecked);
-                  handleSecondaryChainChange('maticmum');
+                setPolygonChecked(!isPolygonChecked);
+                handleSecondaryChainChange('maticmum');
               } else {
-                  alert('You cannot select the same chain as both primary and secondary.');
+                alert('You cannot select the same chain as both primary and secondary.');
               }
-          }}
+            }}
           />
           <Text style={styles.checkboxText}>Polygon Mumbai</Text>
         </View>
         <View style={styles.checkboxAndText}>
-        <CheckBox
-          value={isArbitrumGoerliChecked}
-          onValueChange={() => {
+          <CheckBox
+            value={isArbitrumGoerliChecked}
+            onValueChange={() => {
               if (primaryChain !== 'arbitrum-goerli') {
-                  setArbitrumGoerliChecked(!isArbitrumGoerliChecked);
-                  handleSecondaryChainChange('arbitrum-goerli');
+                setArbitrumGoerliChecked(!isArbitrumGoerliChecked);
+                handleSecondaryChainChange('arbitrum-goerli');
               } else {
-                  alert('You cannot select the same chain as both primary and secondary.');
+                alert('You cannot select the same chain as both primary and secondary.');
               }
-          }}
+            }}
           />
           <Text style={styles.checkboxText}>Arbitrum Goerli</Text>
         </View>
@@ -195,7 +228,7 @@ export default function App() {
         <View style={styles.checkboxAndText}>
           <CheckBox
             value={crossChainDeploymentType === 'replicated'}
-            onValueChange={() => setcrossChainDeploymentType('replicated')}
+            onValueChange={() => setCrossChainDeploymentType('replicated')}
             containerStyle={[
               styles.checkbox,
               crossChainDeploymentType === 'replicated' ? styles.checked : styles.unchecked,
@@ -206,7 +239,7 @@ export default function App() {
         <View style={styles.checkboxAndText}>
           <CheckBox
             value={crossChainDeploymentType === 'singular'}
-            onValueChange={() => setcrossChainDeploymentType('singular')}
+            onValueChange={() => setCrossChainDeploymentType('singular')}
             containerStyle={[
               styles.checkbox,
               crossChainDeploymentType === 'singular' ? styles.checked : styles.unchecked,
@@ -217,25 +250,20 @@ export default function App() {
       </View>
 
       <View style={styles.centeredContainer}>
-        <Pressable
-          style={styles.deployButton}
-          onPress={handleDeployContract}
-        >
-          <Text style={styles.deployButtonText}>DEPLOY</Text>
+        <Pressable style={styles.deployButton} onPress={handleDeployContract}>
+          <Text style={styles.deployButtonText}>
+            {isDeploying ? 'Deploying...' : 'DEPLOY'}
+          </Text>
         </Pressable>
       </View>
       <View style={styles.poweredByContainer}>
-        <Image 
-            source={chainlinkLogo} 
-            style={styles.bottomRightImage} 
-        />
+        <Image source={chainlinkLogo} style={styles.bottomRightImage} />
         <View style={styles.poweredByTextContainer}>
-            <Text style={styles.poweredBy}>Powered by</Text>
-            <Text style={styles.chainlinkText}>Chainlink</Text>
+          <Text style={styles.poweredBy}>Powered by</Text>
+          <Text style={styles.chainlinkText}>Chainlink</Text>
         </View>
-    </View>
+      </View>
     </ScrollView>
-    
   );
 }
 
@@ -355,27 +383,27 @@ const styles = StyleSheet.create({
   poweredByContainer: {
     flexDirection: 'row',
     position: 'absolute',
-    right: 75,   // move it left by approx 2cm
-    bottom: 20,  // move it up a tiny bit
-    alignItems: 'center',  // align items vertically in the center
+    right: 75,
+    bottom: 20,
+    alignItems: 'center',
   },
   bottomRightImage: {
-      width: 100,
-      height: 100,
-      resizeMode: 'contain',
+    width: 100,
+    height: 100,
+    resizeMode: 'contain',
   },
   poweredByTextContainer: {
-      marginLeft: 10, // give some space between image and text
+    marginLeft: 10,
   },
   poweredBy: {
-      color: '#fff',
-      fontFamily: 'Inter-Black',
-      fontSize: 14,  // adjust as needed
+    color: '#fff',
+    fontFamily: 'Inter-Black',
+    fontSize: 14,
   },
   chainlinkText: {
-      color: '#fff',
-      fontFamily: 'Inter-Black',
-      fontSize: 16,  // adjust as needed
-      fontWeight: 'bold',
-  }
+    color: '#fff',
+    fontFamily: 'Inter-Black',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
