@@ -20,6 +20,9 @@ export default function App() {
   const [isSepoliaChecked, setSepoliaChecked] = useState(false);
   const [isArbitrumGoerliChecked, setArbitrumGoerliChecked] = useState(false);
 
+  const [isDeploying, setIsDeploying] = useState(false);
+
+
   const handlePrimaryChainChange = (value) => {
     setPrimaryChain(value);
     if (secondaryChains.includes(value)) {
@@ -48,6 +51,8 @@ export default function App() {
   };
 
   const handleDeployContract = async () => {
+    setIsDeploying(true);
+
     console.log('Smart Contract:', contractInput);
     console.log('Primary Chain:', primaryChain);
     console.log('Secondary Chains:', secondaryChains);
@@ -94,8 +99,12 @@ export default function App() {
       } else {
         console.error('API Error:', response.statusText);
       }
+
+      setIsDeploying(false);
+
      } catch (error) {
       console.error('Fetch error:', error.message);
+      setIsDeploying(false); 
     }
     };
 
@@ -217,12 +226,14 @@ export default function App() {
       </View>
 
       <View style={styles.centeredContainer}>
-        <Pressable
+      <Pressable
           style={styles.deployButton}
           onPress={handleDeployContract}
-        >
-          <Text style={styles.deployButtonText}>DEPLOY</Text>
-        </Pressable>
+      >
+          <Text style={styles.deployButtonText}>
+              {isDeploying ? 'Deploying...' : 'DEPLOY'}
+          </Text>
+      </Pressable>
       </View>
       <View style={styles.poweredByContainer}>
         <Image 
