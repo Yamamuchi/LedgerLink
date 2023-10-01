@@ -14,6 +14,10 @@ export default function App() {
   const [isPolygonChecked, setPolygonChecked] = useState(false);
   const [isSepoliaChecked, setSepoliaChecked] = useState(false);
 
+  // Create separate state for Cross Chain Replication Type checkboxes
+  const [isReplicatedChecked, setReplicatedChecked] = useState(false);
+  const [isSingularChecked, setSingularChecked] = useState(false);
+
   const handleSecondaryChainChange = (chain) => {
     if (secondaryChains.includes(chain)) {
       setSecondaryChains(secondaryChains.filter((c) => c !== chain));
@@ -99,6 +103,34 @@ export default function App() {
       </View>
 
       <View style={styles.centeredContainer}>
+        <Text style={styles.label}>Cross Chain Replication Type:</Text>
+      </View>
+      <View style={styles.checkboxContainer}>
+        <View style={styles.checkboxAndText}>
+          <CheckBox
+            value={isReplicatedChecked}
+            onValueChange={() => setReplicatedChecked(!isReplicatedChecked)}
+            containerStyle={[
+              styles.checkbox,
+              isReplicatedChecked ? styles.checked : styles.unchecked,
+            ]}
+          />
+          <Text style={styles.checkboxText}>Replicated</Text>
+        </View>
+        <View style={styles.checkboxAndText}>
+          <CheckBox
+            value={isSingularChecked}
+            onValueChange={() => setSingularChecked(!isSingularChecked)}
+            containerStyle={[
+              styles.checkbox,
+              isSingularChecked ? styles.checked : styles.unchecked,
+            ]}
+          />
+          <Text style={styles.checkboxText}>Singular</Text>
+        </View>
+      </View>
+
+      <View style={styles.centeredContainer}>
         <Pressable
           style={styles.deployButton}
           onPress={handleDeployContract}
@@ -165,7 +197,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   pickerContainer: {
-    marginTop: 4, // Adjust the margin to reduce the gap
+    marginTop: 4,
   },
   picker: {
     marginBottom: 16,
@@ -192,10 +224,10 @@ const styles = StyleSheet.create({
     borderWidth: 0,
   },
   checked: {
-    backgroundColor: 'green', // Change to your desired checked color
+    backgroundColor: 'green',
   },
   unchecked: {
-    backgroundColor: 'red', // Change to your desired unchecked color
+    backgroundColor: 'red',
   },
   checkboxText: {
     color: '#fff',
