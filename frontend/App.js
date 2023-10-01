@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { ScrollView, View, Text, TextInput, Pressable, CheckBox, Picker, StyleSheet, Alert } from 'react-native';
+import { ScrollView, View, Text, TextInput, Pressable, CheckBox, Picker, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { useFonts } from 'expo-font';
+import { Asset } from 'expo-asset';
 
 export default function App() {
   const [contractInput, setContractInput] = useState('');
@@ -11,6 +12,8 @@ export default function App() {
   useFonts({
     'Inter-Black': require('./assets/fonts/static/Inter-Black.ttf'), // Update the path to your font file
   });
+
+  const chainlinkLogo = Asset.fromModule(require('./assets/chainlinklogo.png'));
 
   // Create separate state for each checkbox
   const [isPolygonChecked, setPolygonChecked] = useState(false);
@@ -221,7 +224,18 @@ export default function App() {
           <Text style={styles.deployButtonText}>DEPLOY</Text>
         </Pressable>
       </View>
+      <View style={styles.poweredByContainer}>
+        <Image 
+            source={chainlinkLogo} 
+            style={styles.bottomRightImage} 
+        />
+        <View style={styles.poweredByTextContainer}>
+            <Text style={styles.poweredBy}>Powered by</Text>
+            <Text style={styles.chainlinkText}>Chainlink</Text>
+        </View>
+    </View>
     </ScrollView>
+    
   );
 }
 
@@ -229,8 +243,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+    // Adjust the background color with a slightly increased transparency
+    backgroundImage: 'linear-gradient(45deg, rgba(106,90,205,0.8), rgba(164,82,224,0.8))',
     backgroundColor: '#6a5acd',
-    backgroundImage: 'linear-gradient(45deg, #6a5acd, #a452e0)',
   },
   centeredContainer: {
     alignItems: 'center',
@@ -337,4 +352,30 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'white',
   },
+  poweredByContainer: {
+    flexDirection: 'row',
+    position: 'absolute',
+    right: 75,   // move it left by approx 2cm
+    bottom: 20,  // move it up a tiny bit
+    alignItems: 'center',  // align items vertically in the center
+  },
+  bottomRightImage: {
+      width: 100,
+      height: 100,
+      resizeMode: 'contain',
+  },
+  poweredByTextContainer: {
+      marginLeft: 10, // give some space between image and text
+  },
+  poweredBy: {
+      color: '#fff',
+      fontFamily: 'Inter-Black',
+      fontSize: 14,  // adjust as needed
+  },
+  chainlinkText: {
+      color: '#fff',
+      fontFamily: 'Inter-Black',
+      fontSize: 16,  // adjust as needed
+      fontWeight: 'bold',
+  }
 });
