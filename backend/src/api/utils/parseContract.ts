@@ -2,6 +2,8 @@ import solc from 'solc';
 
 // This function compiles the Solidity contract and returns the JSON output.
 export function compileContract(source: string): any {
+    console.log("Raw contract source:", source);
+
     const input = {
         language: 'Solidity',
         sources: {
@@ -19,6 +21,7 @@ export function compileContract(source: string): any {
     };
 
     const output = JSON.parse(solc.compile(JSON.stringify(input)));
+    console.log("Compiler output:", output);
     return output.contracts['contract.sol'];
 }
 
