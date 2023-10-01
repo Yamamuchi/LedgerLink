@@ -66,6 +66,7 @@ contract CCIPProxy {
 export function generateSingularFowardingProxyContract(): string {
     // Contract template
     let proxyCode = `
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 ${IRouterClient}
