@@ -180,9 +180,9 @@ export async function deployContracts(
             proxyContract, 
             proxyContractName, 
             networkConstructorArguments[network][0],
-            networkConstructorArguments[primaryNetwork][1],
+            networkConstructorArguments[network][1],
             primaryAddress,
-            networkConstructorArguments[network][2].toString());
+            networkConstructorArguments[primaryNetwork][2].toString());
         return address;
     });
 
