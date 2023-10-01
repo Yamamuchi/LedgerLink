@@ -1,24 +1,42 @@
 import React, { useState } from 'react';
-import { ScrollView, View, Text, TextInput, Pressable, CheckBox, Picker, StyleSheet } from 'react-native';
+import { ScrollView, View, Text, TextInput, Pressable, CheckBox, Picker, StyleSheet, Alert } from 'react-native';
 import { useFonts } from 'expo-font';
 
 export default function App() {
   const [contractInput, setContractInput] = useState('');
-  const [primaryChain, setPrimaryChain] = useState('ethereum');
+  const [primaryChain, setPrimaryChain] = useState('sepolia');
   const [secondaryChains, setSecondaryChains] = useState([]);
-  const [fontsLoaded] = useFonts({
+  const [crossChainDeploymentType, setcrossChainDeploymentType] = useState(null);
+
+  useFonts({
     'Inter-Black': require('./assets/fonts/static/Inter-Black.ttf'), // Update the path to your font file
   });
 
   // Create separate state for each checkbox
   const [isPolygonChecked, setPolygonChecked] = useState(false);
   const [isSepoliaChecked, setSepoliaChecked] = useState(false);
+  const [isArbitrumGoerliChecked, setArbitrumGoerliChecked] = useState(false);
 
-  // Create separate state for Cross Chain Replication Type checkboxes
-  const [isReplicatedChecked, setReplicatedChecked] = useState(false);
-  const [isSingularChecked, setSingularChecked] = useState(false);
+  const handlePrimaryChainChange = (value) => {
+    setPrimaryChain(value);
+    if (secondaryChains.includes(value)) {
+      setSecondaryChains(secondaryChains.filter((c) => c !== value));
+      // Also update the respective checkbox
+      if (value === 'sepolia') {
+        setSepoliaChecked(false);
+      } else if (value === 'maticmum') {
+        setPolygonChecked(false);
+      } else if (value === 'arbitrum-goerli') {
+        setArbitrumGoerliChecked(false);
+      }
+    }
+  };
 
   const handleSecondaryChainChange = (chain) => {
+    if (chain === primaryChain) {
+      alert('You cannot select the same chain as both primary and secondary.');
+      return;
+    }
     if (secondaryChains.includes(chain)) {
       setSecondaryChains(secondaryChains.filter((c) => c !== chain));
     } else {
@@ -26,12 +44,57 @@ export default function App() {
     }
   };
 
-  const handleDeployContract = () => {
+  const handleDeployContract = async () => {
     console.log('Smart Contract:', contractInput);
     console.log('Primary Chain:', primaryChain);
     console.log('Secondary Chains:', secondaryChains);
-    // Add your deployment logic here
-  };
+    console.log('Replication Type:', crossChainDeploymentType);
+
+    // const formatContractInline = (input) => {
+    //   return input.split('\n').map(line => line.trim()).join('\\n');
+    // };
+  
+    // const contract = formatContractInline(contractInput);
+
+    // console.log('Formatted Contract:', contract);
+
+    const requestBody = {
+      "smartContract": contractInput,
+      "primaryNetwork": primaryChain,
+      "secondaryNetworks": secondaryChains,
+      "crossChainDeploymentType": crossChainDeploymentType
+    };
+
+      // Define your endpoint URL
+    const apiEndpoint = 'http://localhost:3000/deploy';
+
+    try {
+      // Make the API call
+      let response = await fetch(apiEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)  // Send the formatted contract as the body
+      });
+
+      // Handle the response (assuming the response is JSON)
+      if (response.ok) {
+        let jsonResponse = await response.json();
+        console.log('API Response:', jsonResponse);
+      
+        // Show the response as a popup
+        alert(
+          `Contract Deployment Successful\n\nPrimary Address: ${jsonResponse.primaryAddress}\n\nSecondary Addresses: ${jsonResponse.secondaryAddresses.join(", ")}`,
+          [{ text: "HELP" }]
+        );
+      } else {
+        console.error('API Error:', response.statusText);
+      }
+     } catch (error) {
+      console.error('Fetch error:', error.message);
+    }
+    };
 
   const handleConnectWallet = () => {
     // Add logic to connect to the wallet here
@@ -42,7 +105,7 @@ export default function App() {
       contentContainerStyle={styles.container}
     >
       <View style={styles.centeredContainer}>
-        <Text style={styles.logoText}>LEDGERLINK</Text>
+        <Text style={styles.logoText}>LedgerLink</Text>
       </View>
       <Pressable
         style={styles.connectButton}
@@ -64,41 +127,61 @@ export default function App() {
         <Text style={styles.label}>Primary Chain:</Text>
       </View>
       <View style={[styles.centeredContainer, styles.pickerContainer]}>
-        <Picker
-          selectedValue={primaryChain}
-          onValueChange={(itemValue) => setPrimaryChain(itemValue)}
-          style={styles.picker}
-        >
-          <Picker.Item label="Ethereum" value="ethereum" />
-          <Picker.Item label="Binance Smart Chain" value="bsc" />
-          {/* Add more options as needed */}
-        </Picker>
+      <Picker
+        selectedValue={primaryChain}
+        onValueChange={(itemValue) => handlePrimaryChainChange(itemValue)}
+        style={styles.picker}
+      >
+        <Picker.Item label="Sepolia" value="sepolia" />
+        <Picker.Item label="Polygon Mumbai" value="maticmum" />
+        <Picker.Item label="Arbitrum Goerli" value="arbitrum-goerli" />
+      </Picker>
       </View>
       <View style={styles.centeredContainer}>
         <Text style={styles.label}>Secondary Chains:</Text>
       </View>
       <View style={styles.checkboxContainer}>
         <View style={styles.checkboxAndText}>
-          <CheckBox
-            value={isPolygonChecked}
-            onValueChange={() => setPolygonChecked(!isPolygonChecked)}
-            containerStyle={[
-              styles.checkbox,
-              isPolygonChecked ? styles.checked : styles.unchecked,
-            ]}
+        <CheckBox
+          value={isSepoliaChecked}
+          onValueChange={() => {
+              if (primaryChain !== 'sepolia') {
+                  setSepoliaChecked(!isSepoliaChecked);
+                  handleSecondaryChainChange('sepolia');
+              } else {
+                  alert('You cannot select the same chain as both primary and secondary.');
+              }
+          }}
+          />
+          <Text style={styles.checkboxText}>Sepolia</Text>
+        </View>
+        <View style={styles.checkboxAndText}>
+        <CheckBox
+          value={isPolygonChecked}
+          onValueChange={() => {
+              if (primaryChain !== 'maticmum') {
+                  setPolygonChecked(!isPolygonChecked);
+                  handleSecondaryChainChange('maticmum');
+              } else {
+                  alert('You cannot select the same chain as both primary and secondary.');
+              }
+          }}
           />
           <Text style={styles.checkboxText}>Polygon Mumbai</Text>
         </View>
         <View style={styles.checkboxAndText}>
-          <CheckBox
-            value={isSepoliaChecked}
-            onValueChange={() => setSepoliaChecked(!isSepoliaChecked)}
-            containerStyle={[
-              styles.checkbox,
-              isSepoliaChecked ? styles.checked : styles.unchecked,
-            ]}
+        <CheckBox
+          value={isArbitrumGoerliChecked}
+          onValueChange={() => {
+              if (primaryChain !== 'arbitrum-goerli') {
+                  setArbitrumGoerliChecked(!isArbitrumGoerliChecked);
+                  handleSecondaryChainChange('arbitrum-goerli');
+              } else {
+                  alert('You cannot select the same chain as both primary and secondary.');
+              }
+          }}
           />
-          <Text style={styles.checkboxText}>Sepolia</Text>
+          <Text style={styles.checkboxText}>Arbitrum Goerli</Text>
         </View>
       </View>
 
@@ -108,22 +191,22 @@ export default function App() {
       <View style={styles.checkboxContainer}>
         <View style={styles.checkboxAndText}>
           <CheckBox
-            value={isReplicatedChecked}
-            onValueChange={() => setReplicatedChecked(!isReplicatedChecked)}
+            value={crossChainDeploymentType === 'replicated'}
+            onValueChange={() => setcrossChainDeploymentType('replicated')}
             containerStyle={[
               styles.checkbox,
-              isReplicatedChecked ? styles.checked : styles.unchecked,
+              crossChainDeploymentType === 'replicated' ? styles.checked : styles.unchecked,
             ]}
           />
           <Text style={styles.checkboxText}>Replicated</Text>
         </View>
         <View style={styles.checkboxAndText}>
           <CheckBox
-            value={isSingularChecked}
-            onValueChange={() => setSingularChecked(!isSingularChecked)}
+            value={crossChainDeploymentType === 'singular'}
+            onValueChange={() => setcrossChainDeploymentType('singular')}
             containerStyle={[
               styles.checkbox,
-              isSingularChecked ? styles.checked : styles.unchecked,
+              crossChainDeploymentType === 'singular' ? styles.checked : styles.unchecked,
             ]}
           />
           <Text style={styles.checkboxText}>Singular</Text>
@@ -154,7 +237,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   logoText: {
-    fontSize: 60,
+    fontSize: 69,
     marginBottom: 5,
     color: '#fff',
     fontFamily: 'Inter-Black',
@@ -169,7 +252,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 16,
     alignSelf: 'center',
-    width: '25%',
+    width: '28%',
   },
   connectButtonText: {
     fontFamily: 'Inter-Black',
@@ -179,7 +262,7 @@ const styles = StyleSheet.create({
   },
   inputField: {
     marginBottom: 16,
-    width: '25%',
+    width: '28%',
     borderColor: '#ccc',
     borderWidth: 1,
     padding: 8,
@@ -201,7 +284,7 @@ const styles = StyleSheet.create({
   },
   picker: {
     marginBottom: 16,
-    width: '25%',
+    width: '28%',
     borderColor: '#ccc',
     borderWidth: 1,
     backgroundColor: '#fff',
@@ -243,7 +326,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     borderRadius: 8,
     marginTop: 4,
-    width: '25%',
+    width: '28%',
     borderColor: '#ccc',
     borderWidth: 2,
     alignSelf: 'center',
