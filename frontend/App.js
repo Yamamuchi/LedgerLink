@@ -1,10 +1,25 @@
+// Import necessary modules and components
 import React, { useState, useEffect } from 'react';
-import { ScrollView, View, Text, TextInput, Pressable, CheckBox, Picker, Image, StyleSheet } from 'react-native';
+import {
+  ScrollView,
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  CheckBox,
+  Picker,
+  Image,
+  StyleSheet,
+} from 'react-native';
 import { useFonts } from 'expo-font';
 import { Asset } from 'expo-asset';
 import { ethers } from 'ethers';
+import { LinearGradient } from 'expo-linear-gradient';
+import { styles } from './styles.js'; // Import styles from another file
 
+// Define the main App component
 export default function App() {
+  // State variables for various aspects of the application
   const [contractInput, setContractInput] = useState('');
   const [primaryChain, setPrimaryChain] = useState('sepolia');
   const [secondaryChains, setSecondaryChains] = useState([]);
@@ -12,30 +27,34 @@ export default function App() {
   const [isPolygonChecked, setPolygonChecked] = useState(false);
   const [isSepoliaChecked, setSepoliaChecked] = useState(false);
   const [isArbitrumGoerliChecked, setArbitrumGoerliChecked] = useState(false);
-  const [isDeploying, setIsDeploying] = useState(false);
   const [provider, setProvider] = useState(null);
   const [wallet, setWallet] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
-
   const [primaryAddress, setPrimaryAddress] = useState('');
   const [secondaryAddresses, setSecondaryAddresses] = useState([]);
 
+  // Load fonts for the application
   useFonts({
-    'Inter-Black': require('./assets/fonts/static/Inter-Black.ttf'), 
+    'Inter-Black': require('./assets/fonts/static/Inter-Black.ttf'),
   });
 
-  const chainlinkLogo = Asset.fromModule(require('./assets/chainlinklogo.png'));
+  // Load the Chainlink logo as an asset
+  const chainlinkLogo = Asset.fromModule(require('./assets/Chainlink-white.png'));
 
+  // Initialize the Ethereum provider using Infura
   useEffect(() => {
     const initProvider = async () => {
       const infuraApiKey = 'YOUR_INFURA_API_KEY';
-      const infuraProvider = new ethers.providers.JsonRpcProvider(`https://mainnet.infura.io/v3/${infuraApiKey}`);
+      const infuraProvider = new ethers.providers.JsonRpcProvider(
+        `https://mainnet.infura.io/v3/${infuraApiKey}`
+      );
       setProvider(infuraProvider);
     };
 
     initProvider();
   }, []);
 
+  // Function to connect to a wallet
   const connectWallet = async () => {
     if (provider) {
       try {
@@ -47,7 +66,7 @@ export default function App() {
         const signer = provider.getSigner();
         const address = await signer.getAddress();
         setWallet(signer);
-        
+
         setIsConnected(true); // Update connection status
 
         alert(`Connected to wallet\n\nAddress: ${address}`);
@@ -58,11 +77,11 @@ export default function App() {
       alert('MetaMask extension is not installed. Please install it to connect your wallet.');
     }
   };
-  
 
+  // State variable to track deployment status
   const [isDeploying, setIsDeploying] = useState(false);
 
-
+  // Function to handle primary chain selection
   const handlePrimaryChainChange = (value) => {
     setPrimaryChain(value);
     if (secondaryChains.includes(value)) {
@@ -77,6 +96,7 @@ export default function App() {
     }
   };
 
+  // Function to handle secondary chain selection
   const handleSecondaryChainChange = (chain) => {
     if (chain === primaryChain) {
       alert('You cannot select the same chain as both primary and secondary.');
@@ -89,6 +109,7 @@ export default function App() {
     }
   };
 
+  // Function to handle contract deployment
   const handleDeployContract = async () => {
     setIsDeploying(true);
 
@@ -97,43 +118,38 @@ export default function App() {
     console.log('Secondary Chains:', secondaryChains);
     console.log('Replication Type:', crossChainDeploymentType);
 
-    // const formatContractInline = (input) => {
-    //   return input.split('\n').map(line => line.trim()).join('\\n');
-    // };
-  
-    // const contract = formatContractInline(contractInput);
-
-    // console.log('Formatted Contract:', contract);
-
+    // Define the request body for API call
     const requestBody = {
-      "smartContract": contractInput,
-      "primaryNetwork": primaryChain,
-      "secondaryNetworks": secondaryChains,
-      "crossChainDeploymentType": crossChainDeploymentType
+      smartContract: contractInput,
+      primaryNetwork: primaryChain,
+      secondaryNetworks: secondaryChains,
+      crossChainDeploymentType: crossChainDeploymentType,
     };
 
-    // Define your endpoint URL
+    // Define the API endpoint URL
     const apiEndpoint = 'http://localhost:3000/deploy';
 
     try {
-      // Make the API call
+      // Make the API call to deploy the contract
       let response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestBody)  // Send the formatted contract as the body
+        body: JSON.stringify(requestBody), // Send the formatted contract as the body
       });
 
       // Handle the response (assuming the response is JSON)
       if (response.ok) {
         let jsonResponse = await response.json();
         console.log('API Response:', jsonResponse);
-      
+
         // Show the response as a popup
         alert(
-          `Contract Deployment Successful\n\nPrimary Address: ${jsonResponse.primaryAddress}\n\nSecondary Addresses: ${jsonResponse.secondaryAddresses.join(", ")}`,
-          [{ text: "HELP" }]
+          `Contract Deployment Successful\n\nPrimary Address: ${jsonResponse.primaryAddress}\n\nSecondary Addresses: ${jsonResponse.secondaryAddresses.join(
+            ', '
+          )}`,
+          [{ text: 'OK' }]
         );
 
         setPrimaryAddress(jsonResponse.primaryAddress);
@@ -143,301 +159,160 @@ export default function App() {
       }
 
       setIsDeploying(false);
-
-     } catch (error) {
+    } catch (error) {
       console.error('Fetch error:', error.message);
-      setIsDeploying(false); 
+      setIsDeploying(false);
     }
   };
 
+  // Return the JSX for the App component
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.centeredContainer}>
-        <Text style={styles.logoText}>LedgerLink</Text>
-      </View>
-      <Pressable style={styles.connectButton} onPress={isConnected ? undefined : connectWallet}>
-        <Text style={styles.connectButtonText}>{isConnected ? 'Connected' : 'Connect to wallet'}</Text>
-      </Pressable>
+    <LinearGradient
+      colors={['purple', 'pink']} // Updated gradient colors to purple and blue
+      style={styles.container}
+    >
+      <ScrollView contentContainerStyle={styles.container}>
+        <View style={styles.centeredContainer}>
+          <Text style={styles.logoText}>LedgerLink</Text>
+        </View>
+        <Pressable style={styles.connectButton} onPress={isConnected ? undefined : connectWallet}>
+          <Text style={styles.connectButtonText}>
+            {isConnected ? 'Connected' : 'Connect to wallet'}
+          </Text>
+        </Pressable>
 
-      <View style={styles.centeredContainer}>
-        <TextInput
-          placeholder="Enter smart contract code here ..."
-          multiline
-          value={contractInput}
-          onChangeText={(text) => setContractInput(text)}
-          style={styles.inputField}
-        />
-      </View>
-      <View style={styles.centeredContainer}>
-        <Text style={styles.label}>Primary Chain:</Text>
-      </View>
-      <View style={[styles.centeredContainer, styles.pickerContainer]}>
-        <Picker
-          selectedValue={primaryChain}
-          onValueChange={(itemValue) => handlePrimaryChainChange(itemValue)}
-          style={styles.picker}
-        >
-          <Picker.Item label="Sepolia" value="sepolia" />
-          <Picker.Item label="Polygon Mumbai" value="maticmum" />
-          <Picker.Item label="Arbitrum Goerli" value="arbitrum-goerli" />
-        </Picker>
-      </View>
-      <View style={styles.centeredContainer}>
-        <Text style={styles.label}>Secondary Chains:</Text>
-      </View>
-      <View style={styles.checkboxContainer}>
-        <View style={styles.checkboxAndText}>
-          <CheckBox
-            value={isSepoliaChecked}
-            onValueChange={() => {
-              if (primaryChain !== 'sepolia') {
-                setSepoliaChecked(!isSepoliaChecked);
-                handleSecondaryChainChange('sepolia');
-              } else {
-                alert('You cannot select the same chain as both primary and secondary.');
-              }
-            }}
+        <View style={styles.centeredContainer}>
+          <TextInput
+            placeholder="Enter smart contract code here ..."
+            multiline
+            value={contractInput}
+            onChangeText={(text) => setContractInput(text)}
+            style={styles.inputField}
           />
-          <Text style={styles.checkboxText}>Sepolia</Text>
         </View>
-        <View style={styles.checkboxAndText}>
-          <CheckBox
-            value={isPolygonChecked}
-            onValueChange={() => {
-              if (primaryChain !== 'maticmum') {
-                setPolygonChecked(!isPolygonChecked);
-                handleSecondaryChainChange('maticmum');
-              } else {
-                alert('You cannot select the same chain as both primary and secondary.');
-              }
-            }}
-          />
-          <Text style={styles.checkboxText}>Polygon Mumbai</Text>
+        <View style={styles.centeredContainer}>
+          <Text style={styles.label}>Primary Chain:</Text>
         </View>
-        <View style={styles.checkboxAndText}>
-          <CheckBox
-            value={isArbitrumGoerliChecked}
-            onValueChange={() => {
-              if (primaryChain !== 'arbitrum-goerli') {
-                setArbitrumGoerliChecked(!isArbitrumGoerliChecked);
-                handleSecondaryChainChange('arbitrum-goerli');
-              } else {
-                alert('You cannot select the same chain as both primary and secondary.');
-              }
-            }}
-          />
-          <Text style={styles.checkboxText}>Arbitrum Goerli</Text>
+        <View style={[styles.centeredContainer, styles.pickerContainer]}>
+          <Picker
+            selectedValue={primaryChain}
+            onValueChange={(itemValue) => handlePrimaryChainChange(itemValue)}
+            style={styles.picker}
+          >
+            <Picker.Item label={<Text style={styles.pickerItem}>Sepolia</Text>} value="sepolia" />
+            <Picker.Item label={<Text style={styles.pickerItem}>Polygon Mumbai</Text>} value="maticmum" />
+            <Picker.Item label={<Text style={styles.pickerItem}>Arbitrum Goerli</Text>} value="arbitrum-goerli" />
+          </Picker>
         </View>
-      </View>
+        <View style={styles.centeredContainer}>
+          <Text style={styles.label}>Secondary Chains:</Text>
+        </View>
+        <View style={styles.checkboxContainer}>
+          <View style={styles.checkboxAndText}>
+            <CheckBox
+              value={isSepoliaChecked}
+              onValueChange={() => {
+                if (primaryChain !== 'sepolia') {
+                  setSepoliaChecked(!isSepoliaChecked);
+                  handleSecondaryChainChange('sepolia');
+                } else {
+                  alert('You cannot select the same chain as both primary and secondary.');
+                }
+              }}
+            />
+            <Text style={styles.checkboxText}>Sepolia</Text>
+          </View>
+          <View style={styles.checkboxAndText}>
+            <CheckBox
+              value={isPolygonChecked}
+              onValueChange={() => {
+                if (primaryChain !== 'maticmum') {
+                  setPolygonChecked(!isPolygonChecked);
+                  handleSecondaryChainChange('maticmum');
+                } else {
+                  alert('You cannot select the same chain as both primary and secondary.');
+                }
+              }}
+            />
+            <Text style={styles.checkboxText}>Polygon Mumbai</Text>
+          </View>
+          <View style={styles.checkboxAndText}>
+            <CheckBox
+              value={isArbitrumGoerliChecked}
+              onValueChange={() => {
+                if (primaryChain !== 'arbitrum-goerli') {
+                  setArbitrumGoerliChecked(!isArbitrumGoerliChecked);
+                  handleSecondaryChainChange('arbitrum-goerli');
+                } else {
+                  alert('You cannot select the same chain as both primary and secondary.');
+                }
+              }}
+            />
+            <Text style={styles.checkboxText}>Arbitrum Goerli</Text>
+          </View>
+        </View>
 
-      <View style={styles.centeredContainer}>
-        <Text style={styles.label}>Cross Chain Replication Type:</Text>
-      </View>
-      <View style={styles.checkboxContainer}>
-        <View style={styles.checkboxAndText}>
-          <CheckBox
-            value={crossChainDeploymentType === 'replicated'}
-            onValueChange={() => setCrossChainDeploymentType('replicated')}
-            containerStyle={[
-              styles.checkbox,
-              crossChainDeploymentType === 'replicated' ? styles.checked : styles.unchecked,
-            ]}
-          />
-          <Text style={styles.checkboxText}>Replicated</Text>
+        <View style={styles.centeredContainer}>
+          <Text style={styles.label}>Cross Chain Replication Type:</Text>
         </View>
-        <View style={styles.checkboxAndText}>
-          <CheckBox
-            value={crossChainDeploymentType === 'singular'}
-            onValueChange={() => setCrossChainDeploymentType('singular')}
-            containerStyle={[
-              styles.checkbox,
-              crossChainDeploymentType === 'singular' ? styles.checked : styles.unchecked,
-            ]}
-          />
-          <Text style={styles.checkboxText}>Singular</Text>
+        <View style={styles.checkboxContainer}>
+          <View style={styles.checkboxAndText}>
+            <CheckBox
+              value={crossChainDeploymentType === 'replicated'}
+              onValueChange={() => setCrossChainDeploymentType('replicated')}
+              containerStyle={[
+                styles.checkbox,
+                crossChainDeploymentType === 'replicated' ? styles.checked : styles.unchecked,
+              ]}
+            />
+            <Text style={styles.checkboxText}>Replicated</Text>
+          </View>
+          <View style={styles.checkboxAndText}>
+            <CheckBox
+              value={crossChainDeploymentType === 'singular'}
+              onValueChange={() => setCrossChainDeploymentType('singular')}
+              containerStyle={[
+                styles.checkbox,
+                crossChainDeploymentType === 'singular' ? styles.checked : styles.unchecked,
+              ]}
+            />
+            <Text style={styles.checkboxText}>Singular</Text>
+          </View>
         </View>
-      </View>
 
-      <View style={styles.centeredContainer}>
-            <Pressable
-                style={styles.deployButton}
-                onPress={handleDeployContract}
-            >
-                <Text style={styles.deployButtonText}>
-                    {isDeploying ? 'Deploying...' : 'DEPLOY'}
+        <View style={styles.centeredContainer}>
+          <Pressable style={styles.deployButton} onPress={handleDeployContract}>
+            <Text style={styles.deployButtonText}>
+              {isDeploying ? 'Deploying...' : 'DEPLOY'}
+            </Text>
+          </Pressable>
+
+          {primaryAddress && (
+            <View>
+              <Text style={styles.addressText}>Primary Address:</Text>
+              <Text style={styles.addressText}>{primaryAddress}</Text>
+            </View>
+          )}
+
+          {secondaryAddresses.length > 0 && (
+            <View>
+              <Text style={styles.addressText}>Secondary Addresses:</Text>
+              {secondaryAddresses.map((address, index) => (
+                <Text key={index} style={styles.addressText}>
+                  {address}
                 </Text>
-            </Pressable>
-
-            {primaryAddress && (
-                <View>
-                    <Text style={styles.addressText}>Primary Address:</Text>
-                    <Text style={styles.addressText}>{primaryAddress}</Text>
-                </View>
-            )}
-
-            {secondaryAddresses.length > 0 && (
-                <View>
-                    <Text style={styles.addressText}>Secondary Addresses:</Text>
-                    {secondaryAddresses.map((address, index) => (
-                        <Text key={index} style={styles.addressText}>{address}</Text>
-                    ))}
-                </View>
-            )}
+              ))}
+            </View>
+          )}
         </View>
-      <View style={styles.poweredByContainer}>
-        <Image source={chainlinkLogo} style={styles.bottomRightImage} />
-        <View style={styles.poweredByTextContainer}>
-          <Text style={styles.poweredBy}>Powered by</Text>
-          <Text style={styles.chainlinkText}>Chainlink</Text>
+        <View style={styles.poweredByContainer}>
+          <Image source={chainlinkLogo} style={styles.bottomRightImage} />
+          <View style={styles.poweredByTextContainer}>
+            <Text style={styles.poweredBy}>Powered by</Text>
+            <Text style={styles.chainlinkText}>Chainlink</Text>
+          </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </LinearGradient>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    // Adjust the background color with a slightly increased transparency
-    backgroundImage: 'linear-gradient(45deg, rgba(106,90,205,0.8), rgba(164,82,224,0.8))',
-    backgroundColor: '#6a5acd',
-  },
-  centeredContainer: {
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  logoText: {
-    fontSize: 69,
-    marginBottom: 5,
-    color: '#fff',
-    fontFamily: 'Inter-Black',
-    fontWeight: 'bold',
-  },
-  connectButton: {
-    backgroundColor: 'white',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    marginTop: 16,
-    alignSelf: 'center',
-    width: '28%',
-  },
-  connectButtonText: {
-    fontFamily: 'Inter-Black',
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#6a5acd',
-  },
-  inputField: {
-    marginBottom: 16,
-    width: '28%',
-    borderColor: '#ccc',
-    borderWidth: 1,
-    padding: 8,
-    backgroundColor: '#fff',
-    fontFamily: 'Inter-Black',
-    borderRadius: 8,
-    fontSize: 16,
-    color: '#aaa',
-  },
-  label: {
-    marginBottom: 8,
-    fontSize: 16,
-    color: '#fff',
-    fontFamily: 'Inter-Black',
-    fontWeight: 'bold',
-  },
-  pickerContainer: {
-    marginTop: 4,
-  },
-  picker: {
-    marginBottom: 16,
-    width: '28%',
-    borderColor: '#ccc',
-    borderWidth: 1,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-  },
-  checkboxContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-    marginBottom: 16,
-    alignSelf: 'center',
-  },
-  checkboxAndText: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  checkbox: {
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-  },
-  checked: {
-    backgroundColor: 'green',
-  },
-  unchecked: {
-    backgroundColor: 'red',
-  },
-  checkboxText: {
-    color: '#fff',
-    fontFamily: 'Inter-Black',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  deployButton: {
-    backgroundColor: '#6a5acd',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 8,
-    marginTop: 4,
-    width: '28%',
-    borderColor: '#ccc',
-    borderWidth: 2,
-    alignSelf: 'center',
-  },
-  deployButtonText: {
-    fontFamily: 'Inter-Black',
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: 'white',
-  },
-  poweredByContainer: {
-    flexDirection: 'row',
-    position: 'absolute',
-    right: 75,
-    bottom: 20,
-    alignItems: 'center',
-  },
-  bottomRightImage: {
-    width: 100,
-    height: 100,
-    resizeMode: 'contain',
-  },
-  poweredByTextContainer: {
-    marginLeft: 10,
-  },
-  poweredBy: {
-    color: '#fff',
-    fontFamily: 'Inter-Black',
-    fontSize: 14,
-  },
-  chainlinkText: {
-      color: '#fff',
-      fontFamily: 'Inter-Black',
-      fontSize: 16,  // adjust as needed
-      fontWeight: 'bold',
-  },
-  addressText: {
-    marginTop: 16,
-    color: '#fff',
-    fontFamily: 'Inter-Black',
-    fontSize: 14,
-  },
-});
