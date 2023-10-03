@@ -8,8 +8,7 @@ import {
   Pressable,
   CheckBox,
   Picker,
-  Image,
-  StyleSheet,
+  Image
 } from 'react-native';
 import { useFonts } from 'expo-font';
 import { Asset } from 'expo-asset';
@@ -32,6 +31,7 @@ export default function App() {
   const [isConnected, setIsConnected] = useState(false);
   const [primaryAddress, setPrimaryAddress] = useState('');
   const [secondaryAddresses, setSecondaryAddresses] = useState([]);
+
 
   // Load fonts for the application
   useFonts({
@@ -149,7 +149,7 @@ export default function App() {
           `Contract Deployment Successful\n\nPrimary Address: ${jsonResponse.primaryAddress}\n\nSecondary Addresses: ${jsonResponse.secondaryAddresses.join(
             ', '
           )}`,
-          [{ text: 'OK' }]
+          [{ text: 'Ok' }]
         );
 
         setPrimaryAddress(jsonResponse.primaryAddress);
@@ -194,15 +194,14 @@ export default function App() {
           <Text style={styles.label}>Primary Chain:</Text>
         </View>
         <View style={[styles.centeredContainer, styles.pickerContainer]}>
-          <Picker
-            selectedValue={primaryChain}
-            onValueChange={(itemValue) => handlePrimaryChainChange(itemValue)}
-            style={styles.picker}
-          >
-            <Picker.Item label={<Text style={styles.pickerItem}>Sepolia</Text>} value="sepolia" />
-            <Picker.Item label={<Text style={styles.pickerItem}>Polygon Mumbai</Text>} value="maticmum" />
-            <Picker.Item label={<Text style={styles.pickerItem}>Arbitrum Goerli</Text>} value="arbitrum-goerli" />
+          <Picker selectedValue={primaryChain} onValueChange={(itemValue) => handlePrimaryChainChange(itemValue)} style={styles.picker} >
+
+            <Picker.Item label="Sepolia" value="sepolia" itemTextStyle={styles.pickerItem} />
+            <Picker.Item label="Polygon Mumbai" value="maticmum" style={styles.pickerItem} />
+            <Picker.Item label="Arbitrum Goerli" value="arbitrum-goerli" style={styles.pickerItem} />
           </Picker>
+
+
         </View>
         <View style={styles.centeredContainer}>
           <Text style={styles.label}>Secondary Chains:</Text>
