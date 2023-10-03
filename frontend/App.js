@@ -15,6 +15,7 @@ import { Asset } from 'expo-asset';
 import { ethers } from 'ethers';
 import { LinearGradient } from 'expo-linear-gradient';
 import { styles } from './styles.js'; // Import styles from another file
+import { parseConstructor } from '../backend/src/api/utils/parseConstructor';
 
 // Define the main App component
 export default function App() {
@@ -31,7 +32,9 @@ export default function App() {
   const [isConnected, setIsConnected] = useState(false);
   const [primaryAddress, setPrimaryAddress] = useState('');
   const [secondaryAddresses, setSecondaryAddresses] = useState([]);
-
+  const [constructorParams, setConstructorParams] = useState({});
+  const [constructorInputs, setConstructorInputs] = useState([]);
+  const [parsedConstructorParams, setParsedConstructorParams] = useState([]);
 
   // Load fonts for the application
   useFonts({
@@ -77,6 +80,31 @@ export default function App() {
       alert('MetaMask extension is not installed. Please install it to connect your wallet.');
     }
   };
+
+  useEffect(() => {
+    if (contractInput) {
+      // Parse the smart contract code when contractInput changes
+      const parsedParams = parseConstructor(contractInput);
+      console.log('Parsed Constructor Parameters:', parsedParams);
+
+      // Check if parsedParams is an object with a "Constructor" property
+      if (parsedParams && Array.isArray(parsedParams.Constructor)) {
+        // Initialize constructorInputs as an array of empty arrays
+        const initialInputs = parsedParams.Constructor.map(() => []);
+        setConstructorInputs(initialInputs);
+        setParsedConstructorParams(parsedParams.Constructor); // Set parsedParams directly
+      } else {
+        console.error('Parsed Constructor is not in the expected format:', parsedParams);
+      }
+    }
+  }, [contractInput]);
+
+  useEffect(() => {
+    console.log('Parsed Constructor Parameters:', parsedConstructorParams);
+  }, [parsedConstructorParams]);
+  
+  
+  
 
   // State variable to track deployment status
   const [isDeploying, setIsDeploying] = useState(false);
@@ -182,6 +210,7 @@ export default function App() {
         </Pressable>
 
         <View style={styles.centeredContainer}>
+          <Text style={styles.label}>Smart Contract Code:</Text>
           <TextInput
             placeholder="Enter smart contract code here ..."
             multiline
@@ -190,19 +219,39 @@ export default function App() {
             style={styles.inputField}
           />
         </View>
+        
+        {Array.isArray(parsedConstructorParams) && parsedConstructorParams.map((param, paramIndex) => (
+          <View key={paramIndex} style={styles.centeredContainer}>
+            <TextInput
+              key={paramIndex}
+              placeholder={`Enter ${param.name} (${param.type})`}
+              value={constructorInputs[paramIndex] || ''}
+              onChangeText={(text) => {
+                const updatedInputs = [...constructorInputs];
+                updatedInputs[paramIndex] = text;
+                setConstructorInputs(updatedInputs);
+              }}
+              style={styles.inputField}
+            />
+          </View>
+        ))}
+
+
+
+
+
+        
         <View style={styles.centeredContainer}>
           <Text style={styles.label}>Primary Chain:</Text>
         </View>
         <View style={[styles.centeredContainer, styles.pickerContainer]}>
           <Picker selectedValue={primaryChain} onValueChange={(itemValue) => handlePrimaryChainChange(itemValue)} style={styles.picker} >
-
             <Picker.Item label="Sepolia" value="sepolia" itemTextStyle={styles.pickerItem} />
             <Picker.Item label="Polygon Mumbai" value="maticmum" style={styles.pickerItem} />
             <Picker.Item label="Arbitrum Goerli" value="arbitrum-goerli" style={styles.pickerItem} />
           </Picker>
-
-
         </View>
+        
         <View style={styles.centeredContainer}>
           <Text style={styles.label}>Secondary Chains:</Text>
         </View>
@@ -250,7 +299,7 @@ export default function App() {
             <Text style={styles.checkboxText}>Arbitrum Goerli</Text>
           </View>
         </View>
-
+        
         <View style={styles.centeredContainer}>
           <Text style={styles.label}>Cross Chain Replication Type:</Text>
         </View>
