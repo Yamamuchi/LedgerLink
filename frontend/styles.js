@@ -37,7 +37,7 @@ export const styles = StyleSheet.create({
       color: '#6a5acd',
     },
     inputField: {
-      marginBottom: 16,
+      marginBottom: 0.1,
       width: '28%',
       borderColor: '#ccc',
       borderWidth: 1,
