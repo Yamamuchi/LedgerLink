@@ -58,28 +58,30 @@ export default function App() {
   }, []);
 
   // Function to connect to a wallet
-  const connectWallet = async () => {
-    if (provider) {
-      try {
-        await window.ethereum.request({ method: 'eth_requestAccounts' });
+const connectWallet = async () => {
+  if (provider) {
+    try {
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
 
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        setProvider(provider);
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      setProvider(provider);
 
-        const signer = provider.getSigner();
-        const address = await signer.getAddress();
-        setWallet(signer);
+      const signer = provider.getSigner();
+      const address = await signer.getAddress();
+      setPrimaryAddress(address); // Set the primaryAddress state
+      setWallet(signer);
 
-        setIsConnected(true); // Update connection status
+      setIsConnected(true); // Update connection status
 
-        alert(`Connected to wallet\n\nAddress: ${address}`);
-      } catch (error) {
-        console.error('Error connecting to wallet:', error.message);
-      }
-    } else {
-      alert('MetaMask extension is not installed. Please install it to connect your wallet.');
+      alert(`Connected to wallet\n\nAddress: ${address}`);
+    } catch (error) {
+      console.error('Error connecting to wallet:', error.message);
     }
-  };
+  } else {
+    alert('MetaMask extension is not installed. Please install it to connect your wallet.');
+  }
+};
+
 
   useEffect(() => {
     if (contractInput) {
@@ -196,7 +198,7 @@ export default function App() {
   // Return the JSX for the App component
   return (
     <LinearGradient
-      colors={['purple', 'pink']} // Updated gradient colors to purple and blue
+      colors={['purple', 'pink']} // Updated gradient colors to purple and pink
       style={styles.container}
     >
       <ScrollView contentContainerStyle={styles.container}>
@@ -205,9 +207,15 @@ export default function App() {
         </View>
         <Pressable style={styles.connectButton} onPress={isConnected ? undefined : connectWallet}>
           <Text style={styles.connectButtonText}>
-            {isConnected ? 'Connected' : 'Connect to wallet'}
+          {isConnected ? (
+            `Connected: ${primaryAddress.substring(0, 6)}...${primaryAddress.substring(38)}`
+          ) : (
+            'Connect to wallet'
+          )}
+
           </Text>
         </Pressable>
+
 
         <View style={styles.centeredContainer}>
           <Text style={styles.label}>Smart Contract Code:</Text>
