@@ -57,30 +57,63 @@ export default function App() {
     initProvider();
   }, []);
 
-  // Function to connect to a wallet
-const connectWallet = async () => {
-  if (provider) {
-    try {
-      await window.ethereum.request({ method: 'eth_requestAccounts' });
+  // Function to check if MetaMask is already connected
+const checkMetaMaskConnection = async () => {
+  if (window.ethereum && window.ethereum.isConnected()) {
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    setProvider(provider);
 
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      setProvider(provider);
+    const signer = provider.getSigner();
+    const address = await signer.getAddress();
+    setPrimaryAddress(address); // Set the primaryAddress state
+    setWallet(signer);
 
-      const signer = provider.getSigner();
-      const address = await signer.getAddress();
-      setPrimaryAddress(address); // Set the primaryAddress state
-      setWallet(signer);
-
-      setIsConnected(true); // Update connection status
-
-      alert(`Connected to wallet\n\nAddress: ${address}`);
-    } catch (error) {
-      console.error('Error connecting to wallet:', error.message);
-    }
+    setIsConnected(true); // Update connection status
   } else {
-    alert('MetaMask extension is not installed. Please install it to connect your wallet.');
+    setIsConnected(false); // MetaMask is not connected
   }
 };
+
+// Use useEffect to run the connection check when the component mounts
+useEffect(() => {
+  checkMetaMaskConnection();
+
+  // Listen for changes in connected accounts
+  window.ethereum.on('accountsChanged', (accounts) => {
+    if (accounts.length === 0) {
+      // MetaMask wallet disconnected
+      setIsConnected(false);
+    } else {
+      // MetaMask wallet reconnected with a different account
+      checkMetaMaskConnection();
+    }
+  });
+}, []);
+
+  // Function to connect to a wallet
+  const connectWallet = async () => {
+    if (provider) {
+      try {
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        setProvider(provider);
+
+        const signer = provider.getSigner();
+        const address = await signer.getAddress();
+        setPrimaryAddress(address); // Set the primaryAddress state
+        setWallet(signer);
+
+        setIsConnected(true); // Update connection status
+
+        alert(`Connected to wallet\n\nAddress: ${address}`);
+      } catch (error) {
+        console.error('Error connecting to wallet:', error.message);
+      }
+    } else {
+      alert('MetaMask extension is not installed. Please install it to connect your wallet.');
+    }
+  };
 
 
   useEffect(() => {
@@ -104,9 +137,9 @@ const connectWallet = async () => {
   useEffect(() => {
     console.log('Parsed Constructor Parameters:', parsedConstructorParams);
   }, [parsedConstructorParams]);
-  
-  
-  
+
+
+
 
   // State variable to track deployment status
   const [isDeploying, setIsDeploying] = useState(false);
@@ -207,11 +240,11 @@ const connectWallet = async () => {
         </View>
         <Pressable style={styles.connectButton} onPress={isConnected ? undefined : connectWallet}>
           <Text style={styles.connectButtonText}>
-          {isConnected ? (
-            `Connected: ${primaryAddress.substring(0, 6)}...${primaryAddress.substring(38)}`
-          ) : (
-            'Connect to wallet'
-          )}
+            {isConnected ? (
+              `Connected: ${primaryAddress.substring(0, 6)}...${primaryAddress.substring(38)}`
+            ) : (
+              'Connect to wallet'
+            )}
 
           </Text>
         </Pressable>
@@ -227,7 +260,7 @@ const connectWallet = async () => {
             style={styles.inputField}
           />
         </View>
-        
+
         {Array.isArray(parsedConstructorParams) && parsedConstructorParams.map((param, paramIndex) => (
           <View key={paramIndex} style={styles.centeredContainer}>
             <TextInput
@@ -248,7 +281,7 @@ const connectWallet = async () => {
 
 
 
-        
+
         <View style={styles.centeredContainer}>
           <Text style={styles.label}>Primary Chain:</Text>
         </View>
@@ -259,7 +292,7 @@ const connectWallet = async () => {
             <Picker.Item label="Arbitrum Goerli" value="arbitrum-goerli" style={styles.pickerItem} />
           </Picker>
         </View>
-        
+
         <View style={styles.centeredContainer}>
           <Text style={styles.label}>Secondary Chains:</Text>
         </View>
@@ -307,7 +340,7 @@ const connectWallet = async () => {
             <Text style={styles.checkboxText}>Arbitrum Goerli</Text>
           </View>
         </View>
-        
+
         <View style={styles.centeredContainer}>
           <Text style={styles.label}>Cross Chain Replication Type:</Text>
         </View>
