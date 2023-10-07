@@ -41,7 +41,18 @@ export default function App() {
   useFonts({
     'Inter-Black': require('./assets/fonts/static/Inter-Black.ttf'),
   });
-
+  useFonts({
+    'Inter-Thin': require('./assets/fonts/static/Inter-Light.ttf'),
+  });
+  useFonts({
+    'Druk': require('./assets/fonts/Druk Family/Druk-Bold-Trial.otf'),
+  });
+  useFonts({
+    'Druk2': require('./assets/fonts/Druk Family/Druk-Heavy-Trial.otf'),
+  });
+  useFonts({
+    'ProximaNova': require('./assets/fonts/Demo_Fonts/Fontspring-DEMO-proximanova-bold.otf'),
+  });
   // Load the Chainlink logo as an asset
   const chainlinkLogo = Asset.fromModule(require('./assets/Chainlink-white.png'));
 
@@ -232,12 +243,12 @@ useEffect(() => {
   // Return the JSX for the App component
   return (
     <LinearGradient
-      colors={['purple', 'pink']} // Updated gradient colors to purple and pink
+      colors={['#00BFF3', '#4F90C1']} // Slightly darker blue gradient colors
       style={styles.container}
     >
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.centeredContainer}>
-          <Text style={styles.logoText}>LedgerLink</Text>
+          <Text style={styles.logoText}>LEDGERLINK</Text>
         </View>
         <Pressable style={styles.connectButton} onPress={isConnected ? undefined : connectWallet}>
           <Text style={styles.connectButtonText}>
