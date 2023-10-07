@@ -10,29 +10,30 @@ export const styles = StyleSheet.create({
     },
     centeredContainer: {
       alignItems: 'center',
-      marginTop: 16,
+      marginTop: 8,
     },
     logoText: {
-      fontSize: 69,
+      fontSize: 110,
       marginBottom: 5,
       color: '#fff',
-      fontFamily: 'Inter-Black',
+      fontFamily: 'Druk',
       fontWeight: 'bold',
     },
+    // Move the connectButton to the top-right corner and make it slightly bigger
     connectButton: {
       backgroundColor: 'white',
       alignItems: 'center',
       justifyContent: 'center',
-      paddingVertical: 16,
-      paddingHorizontal: 16,
+      paddingVertical: 12, // Increased padding for vertical space
+      paddingHorizontal: 16, // Increased padding for horizontal space
       borderRadius: 8,
-      marginTop: 16,
-      alignSelf: 'center',
-      width: '28%',
+      position: 'absolute',
+      top: 16, // Adjust the top position as needed
+      right: 16, // Adjust the right position as needed
     },
     connectButtonText: {
       fontFamily: 'Inter-Black',
-      fontSize: 16,
+      fontSize: 14, // Adjust the font size as needed
       fontWeight: 'bold',
       color: '#6a5acd',
     },
@@ -45,7 +46,7 @@ export const styles = StyleSheet.create({
       backgroundColor: '#fff',
       fontFamily: 'Inter-Black',
       borderRadius: 8,
-      fontSize: 16,
+      fontSize: 14,
       color: '#aaa',
     },
     label: {
@@ -56,7 +57,7 @@ export const styles = StyleSheet.create({
       fontWeight: 'bold',
     },
     pickerContainer: {
-      marginTop: 4,
+      marginTop: 8,
     },
     picker: {
       marginBottom: 16,
@@ -90,26 +91,26 @@ export const styles = StyleSheet.create({
     },
     checkboxText: {
       color: '#fff',
-      fontFamily: 'Inter-Black',
-      fontSize: 16,
+      fontFamily: 'Inter-Thin',
+      fontSize: 14,
       fontWeight: 'bold',
     },
     deployButton: {
-      backgroundColor: '#6a5acd',
+      backgroundColor: '#FF1493',
       alignItems: 'center',
       justifyContent: 'center',
       paddingVertical: 16,
       paddingHorizontal: 32,
       borderRadius: 8,
-      marginTop: 4,
+      marginTop: 8,
       width: '28%',
       borderColor: '#ccc',
       borderWidth: 2,
       alignSelf: 'center',
     },
     deployButtonText: {
-      fontFamily: 'Inter-Black',
-      fontSize: 32,
+      fontFamily: 'Druk2',
+      fontSize: 45,
       fontWeight: 'bold',
       color: 'white',
     },
@@ -131,7 +132,8 @@ export const styles = StyleSheet.create({
     poweredBy: {
       color: '#fff',
       fontFamily: 'Inter-Black',
-      fontSize: 14,
+      fontSize: 16,
+      fontWeight: 'bold',
     },
     chainlinkText: {
       color: '#fff',
@@ -146,7 +148,7 @@ export const styles = StyleSheet.create({
       fontSize: 14,
     },
     pickerItem: {
-      fontFamily: 'Inter-Black',
+      fontFamily: 'Druk',
       fontSize: 16,  // Adjust the font size as needed
       color: '#fff', // Adjust the text color as needed
     },

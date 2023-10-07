@@ -31,6 +31,7 @@ export default function App() {
   const [wallet, setWallet] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [primaryAddress, setPrimaryAddress] = useState('');
+  const [walletAddress, setWalletAddress] = useState('');
   const [secondaryAddresses, setSecondaryAddresses] = useState([]);
   const [constructorParams, setConstructorParams] = useState({});
   const [constructorInputs, setConstructorInputs] = useState([]);
@@ -40,7 +41,18 @@ export default function App() {
   useFonts({
     'Inter-Black': require('./assets/fonts/static/Inter-Black.ttf'),
   });
-
+  useFonts({
+    'Inter-Thin': require('./assets/fonts/static/Inter-Light.ttf'),
+  });
+  useFonts({
+    'Druk': require('./assets/fonts/Druk Family/Druk-Bold-Trial.otf'),
+  });
+  useFonts({
+    'Druk2': require('./assets/fonts/Druk Family/Druk-Heavy-Trial.otf'),
+  });
+  useFonts({
+    'ProximaNova': require('./assets/fonts/Demo_Fonts/Fontspring-DEMO-proximanova-bold.otf'),
+  });
   // Load the Chainlink logo as an asset
   const chainlinkLogo = Asset.fromModule(require('./assets/Chainlink-white.png'));
 
@@ -57,6 +69,39 @@ export default function App() {
     initProvider();
   }, []);
 
+  // Function to check if MetaMask is already connected
+const checkMetaMaskConnection = async () => {
+  if (window.ethereum && window.ethereum.isConnected()) {
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    setProvider(provider);
+
+    const signer = provider.getSigner();
+    const address = await signer.getAddress();
+    setWalletAddress(address); // Set the primaryAddress state
+    setWallet(signer);
+
+    setIsConnected(true); // Update connection status
+  } else {
+    setIsConnected(false); // MetaMask is not connected
+  }
+};
+
+// Use useEffect to run the connection check when the component mounts
+useEffect(() => {
+  checkMetaMaskConnection();
+
+  // Listen for changes in connected accounts
+  window.ethereum.on('accountsChanged', (accounts) => {
+    if (accounts.length === 0) {
+      // MetaMask wallet disconnected
+      setIsConnected(false);
+    } else {
+      // MetaMask wallet reconnected with a different account
+      checkMetaMaskConnection();
+    }
+  });
+}, []);
+
   // Function to connect to a wallet
   const connectWallet = async () => {
     if (provider) {
@@ -68,6 +113,7 @@ export default function App() {
 
         const signer = provider.getSigner();
         const address = await signer.getAddress();
+        setWalletAddress(address); // Set the primaryAddress state
         setWallet(signer);
 
         setIsConnected(true); // Update connection status
@@ -80,6 +126,7 @@ export default function App() {
       alert('MetaMask extension is not installed. Please install it to connect your wallet.');
     }
   };
+
 
   useEffect(() => {
     if (contractInput) {
@@ -102,9 +149,9 @@ export default function App() {
   useEffect(() => {
     console.log('Parsed Constructor Parameters:', parsedConstructorParams);
   }, [parsedConstructorParams]);
-  
-  
-  
+
+
+
 
   // State variable to track deployment status
   const [isDeploying, setIsDeploying] = useState(false);
@@ -196,18 +243,24 @@ export default function App() {
   // Return the JSX for the App component
   return (
     <LinearGradient
-      colors={['purple', 'pink']} // Updated gradient colors to purple and blue
+      colors={['#00BFF3', '#4F90C1']} // Slightly darker blue gradient colors
       style={styles.container}
     >
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.centeredContainer}>
-          <Text style={styles.logoText}>LedgerLink</Text>
+          <Text style={styles.logoText}>LEDGERLINK</Text>
         </View>
         <Pressable style={styles.connectButton} onPress={isConnected ? undefined : connectWallet}>
           <Text style={styles.connectButtonText}>
-            {isConnected ? 'Connected' : 'Connect to wallet'}
+            {isConnected ? (
+              `Connected: ${walletAddress.substring(0, 6)}...${walletAddress.substring(38)}`
+            ) : (
+              'Connect to wallet'
+            )}
+
           </Text>
         </Pressable>
+
 
         <View style={styles.centeredContainer}>
           <Text style={styles.label}>Smart Contract Code:</Text>
@@ -219,7 +272,7 @@ export default function App() {
             style={styles.inputField}
           />
         </View>
-        
+
         {Array.isArray(parsedConstructorParams) && parsedConstructorParams.map((param, paramIndex) => (
           <View key={paramIndex} style={styles.centeredContainer}>
             <TextInput
@@ -240,7 +293,7 @@ export default function App() {
 
 
 
-        
+
         <View style={styles.centeredContainer}>
           <Text style={styles.label}>Primary Chain:</Text>
         </View>
@@ -251,7 +304,7 @@ export default function App() {
             <Picker.Item label="Arbitrum Goerli" value="arbitrum-goerli" style={styles.pickerItem} />
           </Picker>
         </View>
-        
+
         <View style={styles.centeredContainer}>
           <Text style={styles.label}>Secondary Chains:</Text>
         </View>
@@ -299,7 +352,7 @@ export default function App() {
             <Text style={styles.checkboxText}>Arbitrum Goerli</Text>
           </View>
         </View>
-        
+
         <View style={styles.centeredContainer}>
           <Text style={styles.label}>Cross Chain Replication Type:</Text>
         </View>
