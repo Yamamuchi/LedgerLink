@@ -31,6 +31,7 @@ export default function App() {
   const [wallet, setWallet] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [primaryAddress, setPrimaryAddress] = useState('');
+  const [walletAddress, setWalletAddress] = useState('');
   const [secondaryAddresses, setSecondaryAddresses] = useState([]);
   const [constructorParams, setConstructorParams] = useState({});
   const [constructorInputs, setConstructorInputs] = useState([]);
@@ -65,7 +66,7 @@ const checkMetaMaskConnection = async () => {
 
     const signer = provider.getSigner();
     const address = await signer.getAddress();
-    setPrimaryAddress(address); // Set the primaryAddress state
+    setWalletAddress(address); // Set the primaryAddress state
     setWallet(signer);
 
     setIsConnected(true); // Update connection status
@@ -101,7 +102,7 @@ useEffect(() => {
 
         const signer = provider.getSigner();
         const address = await signer.getAddress();
-        setPrimaryAddress(address); // Set the primaryAddress state
+        setWalletAddress(address); // Set the primaryAddress state
         setWallet(signer);
 
         setIsConnected(true); // Update connection status
@@ -241,7 +242,7 @@ useEffect(() => {
         <Pressable style={styles.connectButton} onPress={isConnected ? undefined : connectWallet}>
           <Text style={styles.connectButtonText}>
             {isConnected ? (
-              `Connected: ${primaryAddress.substring(0, 6)}...${primaryAddress.substring(38)}`
+              `Connected: ${walletAddress.substring(0, 6)}...${walletAddress.substring(38)}`
             ) : (
               'Connect to wallet'
             )}
